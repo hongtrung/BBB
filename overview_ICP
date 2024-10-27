@@ -1,0 +1,6 @@
+IPC 
+
+SUS: single unix specification là tập hợp các yêu cầu để 1 hệ điều hành đc gọi là unix. unix like là các hệ điều hành không hoàn toàn hỗ trợ SUS. linux và bsd là các unix like vì chúng không hoàn toàn hỗ trợ SUS
+
+system V hay unix system v là 1 chuẩn unix cũ được đưa ra bởi AT&T, hiện tại các API của nó vẫn còn được hỗ trợ bởi 1 UNIX_LIKE như Linux
+

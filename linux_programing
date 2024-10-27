@@ -54,6 +54,18 @@
  	B1.1: phát triển applications.	(TRỌNG TÂM)
  			+ Viết app
 
+-----------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
 
 		***BUỔI 2***
 * Makefile
@@ -204,6 +216,196 @@ bước 2: create shared lib
 bước 3: link dynamically with the shared lib(tạo liên kết động với thư viện shared)
 	
 	gcc obj/main.o -L lib/shared_lib -l hi -o bin/examble
+
+
+
+
+
+
+
+
+
+---------------------------------------------------------------------------------------
+
+
+		***BUỔI 3***
+I. TÔNG QUAN VỀ FILE TRÊN LINUX.
+	Linux quản lý tất cả mọi thứ như 1 file
+		- regular file: là các file thông thường như text file executalbel file
+		- directories file: file chứa danh sách các file khác
+		- character device file: file đại diện cho các thiết bị không có địa chỉ vùng nhớ
+		- block device file: file đại diện cho các thiết bị có địa chỉ vùng nhớ 
+		- link file: file đại diện cho 1 file khác
+		- socket file: file đại diện cho 1 socket
+		- pipe file: file đại diện cho 1 pipe
+	lệnh ls -l lấy ra toàn bộ thông tin file
+	     ls -lh
+	lệnh sudo su để truy nhập quyền user root
+	
+		số hardlink file là số file cùng trỏ đến 1 vùng nhớ trên ổ cứng
+		- loại file : "-" regular file
+				"d" directories
+				
+user permission		group permission	other permission
+r-w-x 1-1-1  7		r-w-x  1-1-1		r-w-x  1-1-1			
+r-w   1-1-0  6
+
+để loại bỏ quyền r-w-x của file sử dụng câu lệnh:
+	chmod u-r <tên file> loại bỏ quyền r trong user permission
+	chmod g-r <tên file> loại bỏ quyền r trong group permission
+	chmod o-r <tên file> loại bỏ quyền r trong other permission
+để add quyền cho file sử dụng lệnh:
+	chmod u+r <tên file> add quyền r trong user permission
+	chmod g+r <tên file> add quyền r trong group permission
+	chmod o+r <tên file> add quyền r trong other permission
+thêm quyền rw cho cả user group other sử dụng lệnh
+	chmod 0666 <tên file>
+full quyền 
+	chmod 0777 <tên file>
+chuyển quyền sở hữu file cấp user:
+	sudo chown trungdoan <têb file>
+chuyển quyền sở hữu file cấp user&group:
+	sudo chown trungdoan:trungdoan <tên file>
+	
+chmod: change quyền
+chown: change user group
+	
+II. ĐỌC GHI FILE TRÊN LINUX
+* kernel cung cấp 1 bộ system call cơ bản để thực hiện việc đọc ghi và thao tác với các file bao gồm:
+	- open()  
+		int open(const char* pathname, int flags, mode_t mode);
+	vd:
+		int fd;
+		fd = open("hello.txt", O_RDONLY, 0666); 
+	
+		+ const char* pathname: đường dẫn tới file "hello.txt"
+	
+		+ int flags: O_RDONLY chỉ đọc, O_WRONLY chỉ ghi, O_RDWR vừa đọc vừa ghi, O_CREAT kiểu tra xem có file chưa, chưa có thì tạo file....
+	
+		+ mode_t mode: r-w-x :0666
+		
+	- read()
+		ssize_t read(int fd, void* buffer, size_t count);
+	vd:
+	
+	- write()
+		ssize_t write(int fd, void* buffer, size_t count);
+	vd:
+		int numb_write;
+		char buf1[12] = "hello world\n";
+		numb_write = write(fd, buf1, strlen(buf1));
+		
+	- lseek()
+		off_t lseek(int fd, off_t offset, int whence);
+	vd: 	lseek(fd, 2, SEEK_SET);
+	SEEK_SET: con trỏ file ở đầu file
+	SEEK_CUR: con trỏ file ở vị trí hiện tại 
+	SEEK_END: con trỏ file ở cuối file
+		
+	- close()
+		int close(int fd);
+	vd 	close (fd);
+
+fd: file descriptor(định danh của file)
+
+III. Quản lý file trong Linux
+* kernel điều khiển việc tương tác giữa các tiến trình thông qua 3 bảng
+
+- file descriptor table: 
+
+- open file table: chứa các inode ptr, status flag, file offset(SEEK_SET+0,SEET_SET +1,...)
+
+- i-node table: mỗi phần tử trong bảng i-node đại diện cho 1 file chứa các thông tin của file như: inode number, file type, size, hardlink, permission, file ptr
+
+	Thực hiện đọc ghi thì từ file descriptor->open file -> i node file
+
+* trong cùng 1 process có thể có nhiều FDs cùng tham chiếu vào 1 vị trí trong OFD
+ sử dụng dup(), dup2().
+* hai process mở cùng 1 file tham chiếu tới cùng 1 OFD
+sử dụng fork()
+* 2 process cùng mở 1 file tham chiếu tới cùng 1 inode
+* khi tiến trình dùng lệnh read()/write()
+
+READ()
+1. kernel xác định page cần đọc
+2. kernel đọc từ page cache
+3. nếu page có trong page cache thông tin sẽ được đọc ra
+4. Nếu page không có trong page cache, Đọc từ cùng nhớ vật lý vào page cache sau đó đọc ra cho userspace
+
+WRITE()
+1. kernel ghi nội dung page vào page cache
+2. page cache sẽ được ghi vào vùng nhớ vật lý định kỳ hoặc khi dùng các lệnh sync(), fsync().
+
+IV. File locking
+- record lock
+- file lock
+
+-file locking dùng để quản lý việc nhiều tiến trình cùng đọc/ghi vào 1 file
+- cách hoạt động:
+bước 1: ghi trạng thái vào i node của file
+bước 2: nếu thành công thì thực hiện đọc ghi file, nếu không thânhf công nghĩa là file đang đc tiến trình khác sử dụng
+bước 3: sau khi đọc/ghi xong gỡ trạng thái lock ra khỏi i node của file
+
+Flock() đơn giản, thông tin ghi vào inode là trạng thái lock, lock toàn bộ file. tại 1 thời điểm chỉ có 1 tiến trình đọc/ghi file
+
+Fcntl()	phức tạp, thông tin ghi vào inode là trạng thái lock, khu vực lock, tiến trình lock, lock được từng khu vực của file, nhiều tiến trình có thể đọc/ghi cùng 1 file mà không bị xung đột					
+
+-lock file với flock()
+	int flock(int fd, int operation);
+	Flock dựa vào thông tin file descirptor để đặt trạng thái lock vào inode table
+	
+	các đối số:
+	fd: file descriptor của file cần lock
+	operation: giá trị lock muốn set
+	- LOCK_SH: nếu set giá trị này thành công tiến trình có thể đọc file, không ghi
+	- LOCK_EX: nếu set giá trị này thành công tiến trình có thể đọc ghi file 
+	- LOCK_UN: set giá trị này để báo rằng file không bị lock
+	- LOCK_NB: nếu không dùng flag này hàm flock sẽ không kết thúc cho tới khi set được lock.
+	
+	TIến trình A			Tiến trình B
+	lock_sh			có thể set lock_sh, không thể set lock_ex
+	lock_ex			không thể set lock_sh, lock_ex
+	
+
+- lock file với fcntl()
+	fcntl(fd, cmd, &flockstr)
+	fcntl linh hoạt hơn flock. fcntl cho phép lock từng phần của file(thậm chí đến từng byte). thông tin lock đặt vào inode table sẽ gồm process ID, trạng thái lock, vùng lock
+	
+	các đối số:
+	. fd: file descriptor của file cần lock
+	. cmd: action muốn thực hiện
+		. F_SETLK: đặt lock, bỏ lock
+		. F_GETLK: đọc thông tin lock
+	. flockstr: thông tin muốn lock(gồm trạng thái lock, vùng muốn lock, process lock)
+	 
+	 struct flock
+	 {
+		short l_type;	//lock type: F_RDLCK, F_WRLCK, F_UNLCK
+		short l_whence;	// how ti interpret 'I_start': SEEK_SET, SEEK_CUR, SEEK_END
+		
+		off_t l_start;	// offset where the lock begins
+	 	off_t l_len;	// number of byte to lock, 0 means "until EOF"
+	 	pid_t l_pid;	// process preventing our lock(F_GETLK only)
+	 }	
+struct flock fl{
+	fl.l_start = 1;                         // offset vi tri lock dau tien
+        fl.l_len = 5;                           // number of bytes to lock, 0 means lock "until EOF" 
+        fl.l_type = F_WRLCK;                    // lock type: F_RDLCK, F_WRLCK, F_UNLCK
+        fl.l_whence = SEEK_SET;                 // how to interpret: SEEK_SET, SEEK_CUR, SEEK_END
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
