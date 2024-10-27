@@ -1,0 +1,10 @@
+open vscode
+	crtl+shift+p
+	Remote ssh config file
+	/home/trungdoan/.ssh/config
+
+	host ten_server
+		hostName 192.168.1.9
+		user trungdoan
+
+		

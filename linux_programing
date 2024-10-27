@@ -1,0 +1,247 @@
+		***BUỔI 1***
+- cpu(não)
+- hệ thống ngoại vi(tay chân)
+- hệ thông bus(kinh mạch)
+- clock(máu)
+
+
+
+>>>>>>>>>ARM
+
+-Application: 	+ Lập trình ứng dụng ngừoi dùng
+		+ tốn năng lượng
+		+ khả năng sử lý cao
+-Realtime: 	+ ứng dụng có tính quan trọng về mặt thời gian thực
+		+ Hard-realtime
+		+ Soft-realtime
+-Micontroller: 	+ Được sử dụng rộng rãi cho các hệ thống smarthome, iot...
+		+ Tiết kiệm năng lượng
+
+
+
+>>>>>>>>> Bộ BSP
+
+- Bootloader:	Bộ nạp khởi động.(Tối ưu thời gian khởi động thêm cmd điều khiển, phân vùng lại flash,... )
+- linux Kernel:	Quản lý phần mềm phần cứng
+- Rootfs:	không gian chạy các ứng dụng
+- Toolchain: 	Compiler, công cụ giúp phát triển các ứng dụng(có sẵn, học cách sử dụng)
+
+
+
+
+>>>>>>>>> Mảng nhúng ở việt nam
+
+- nhóm cty làm về outsource (Điển hình FPT) 
+		(nhận dự án nước ngoài): nhận thiết bị bên brander, hợp tác làm ra 1 bộ BSP
+	+ - Bootloader:	Bộ nạp khởi động.(Tối ưu thời gian khởi động thêm cmd điều khiển, phân vùng lại flash,... )
+	+ Linux kernel: viết driver: I2C/SPI/USBT/CAN/GPIO,...
+	+ Rootfs: Phát triển các ứng dụng trên tầng usr space
+
+- nhóm cty làm về product (VNPT, FPT, Lumi, Dasan, Vinfast,...)
+ 	
+ 	VD: làm 1 con bóng đèn đáp ứng chức năng bluetooth, zigbee,...
+ 	
+ 	>>>>>HW
+ 	B1: tìm 1 thiết bị có sẵn trên thị trường đáp ứng được chức năng + chi phí mà bài toán đưa ra
+ 	B2: Design lại phần cứng, loại bỏ các thành phần không cần thiết.
+ 	
+ 	>>>>>SW
+ 	B1.0: Bringup, Porting hệ điều hành lên cái phần cứng đã designed.
+ 		- Tối ưu lại các thành phần phần mềm của hệ thống
+ 			+ u-boot
+ 			+ kernel
+ 			+ rootfs
+ 	B1.1: phát triển applications.	(TRỌNG TÂM)
+ 			+ Viết app
+
+
+		***BUỔI 2***
+* Makefile
+- makefile là 1 script bên trong có chứa thông tin :
+	+ cấu trúc của một project(file, dependency)
+	+ các command line dùng để tạo hủy file.
+- chương trình make sẽ đọc nội dung trong Makefile và thực thi nó.
+
+- cấu trúc của 1 câu lệnh Makefile 
+		Target: Dependences
+  		Tab	Action
+  	VD:
+		all: hello.c main.c 
+			gcc -o examble hello.c main.c -I .
+			...
+		clear:
+			rm -rf examble
+			
+$@: là target
+$<: giá trị đầu tiên bên phải dấu : (dependency đầu tiên)
+$^: toàn bộ giá trị nằm bên phải dấu : (toàn bộ dependency)	
+	
+------Các phép gán giá trị.		
+var := "var"
+var1 = $(var) // là phép gán đệ quy: nhận giá trị gán cuối cùng
+var2 := $(var) // phép gán trực tiếp: chỉ nhận 1 giá trị tại thời điểm gán
+var3 ?= $(var) // thực hiện kiểm tra xem var3 có giá trị chưa, nếu có sẽ giữ nguyên giá trị của var3, nếu chưa thực hiện phép gán đệ quy.
+
+biến .PHONY: rule1 rule2 rule3 ... (có tác dụng tránh lỗi file trùng tên với rule không chạy chương trình)
+
+# để comment
+
+quy tắc set tên makefile và độ ưu tiên: Makefile>makefile>abc.mk
+
+để chạy abc.mk --> make -f abc.mk
+
+1 makefile muốn include đến 1 makefile khác --> include abc.mk
+
+
+kiểm tra các file sửa đổi	
+	INC_FILE := hello.h
+	CC := gcc
+	CFFLAG := -I.
+	
+	%.o: %.c $(INC_FILE)
+		$(CC) -I. -c -o $@ $<
+
+-o là output 
+-c là đưa ra 1 file object .o
+
+(gcc -I -c -o main.o main.c)
+
+>>>>>>>>>>>>>>Compiling a C program
+1) gia đoạn tiền sử lý(pre-processing)
+	- Loại bỏ comments
+	- mở rộng các macros
+	- mở rộng các include file
+	- biên dịch các câu lệnh điều khiển
+	- kết quả thu được sau bước này là 1 fiel.i
+	gcc -E hello.c -o hello.i 
+	
+2) giai đoạn dịch ngôn ngữ bậc cao sang asm(compilation)
+	- ở gia đoạn này, mã nguồn sẽ tiếp tục thực hiện biên dịch từ file.i thu được thành 1 file.s(assembly)
+	gcc -S hello.i -o hello.s
+	
+3) giai đoạn dịch asm sang mã máy(Assembly)
+	- File.s ở giai đoạn trước tiếp tục được sử dụng cho giai đoạn này
+	- thông qua assembler, output mà chúng ta thu được 1 file.o. Đây là file chứa các chỉ lệnh cấp độ ngôn ngữ máy (machine language: nhị phân 01)
+	gcc -c hello.s -o hello.o
+	hexdump -c hello.o
+	
+4) Giai đoạn linked (linking)
+	- Mỗi 1 file.o thu được ở giai đoạn Assembly là một phần của chương trình
+	- ở giai đoạn linking sẽ liên kết chúng để thu được 1 file thực thi hoàn chỉnh.
+	gcc -o hello hello_0.o hello_1.o hello_2...
+	
+	
+>>>>>>STATIC LIB AND SHARE LIB
+	thư viện là một tập hợp các đoạn mã được biên dịch sẵn để có thể được sử dụng lại trong 1 chương trình
+	
+	được chia làm 2 lại 
+		- static_lib: thư viện đọc
+		- share_lib: thư viện chia sẻ được
+
+	có N Source_File --> có N Object_file --> Linker}
+				Runtime_library--> Linker} --> executable program
+
+properties		static_lib			shared_lib
+linking time	|all module trong thư viện	|đc sử dụng trong quá trình link khi 
+		|đc copy vào file thự thi	|mà cả file thự thi và file lib được load 
+		|				|vào bộ nhớ
+size		|tốn nhiều bộ nhớ hơn 		|tốn ít bộ nhớ hơn
+
+
+external file	|phải recompile bất cứ lúc nào	|không cần biên dịch lại file thực thi
+changes		|có sự thay đổi		|
+
+
+time		|mất nhiều thời gian hơn	|tốn ít hơn
+
+
+
+* Phân chia folder 1 project
+	- Bin chứa examble
+	- inc chứa file.h
+	- lib chứa static_lib và shared_lib
+	- obj chứa file.o
+	- src chứa file.c
+	- main.c để ngoài 
+	
+* tạo static_lib
+bước 1: tạo các file.o
+	
+	gcc -c main.c -o obj/main.o -I./inc
+	
+	giải thích: 	
+		- c: tạo ra file object từ main.c
+	    	- o: tạo ra file output đặt trong thư mục obj và có tên là main.o
+	    	- I./inc: chỉ định folder chứa các file.h hay include các file.h
+Bước 2: Create static lib
+	
+	ar rcs lib/static_lib/libhello.a obj/hello.o obj/hi.o ....  
+  	
+  	giải thích: 
+  		- ar rsc 
+	    	- lib/static_lib/libhello.a nơi lưu file lib.a
+	    	- obj/hello.o obj/hi.o ... là cái file.o muốn lib
+Bước 3: Link statically
+
+	gcc obj/main.o -Llib/static_lib -lhello -o bin/exam
+	
+	giải thích:
+		- obj/main.o: liên kết file main.o với thư viện
+		- -L lib/static_lib: cờ -L biểu thị thư mục nơi có thể tìm thấy các lib
+		- -l hello: cờ -l cho biết tên của thư viện bỏ (lib và .o)
+		- -o bin/exam: tạo ra file output đặt trong folder bin tên là exam
+
+*tạo shared_lib
+bước 1: tạo các file.o tương tự static_lib
+bước 2: create shared lib
+	
+	gcc -shared obj/hello.o obj/hi.o -o lib/shared_lib/libhi.so
+	
+	giải thích:
+		- -shared: tạo lib share
+		- obj/hello.o obj/hi.o... các file.o cần tạo thư viện
+		- lib/shared_lib/libhi.so tạo file.so tại địa chỉ kia 
+bước 3: link dynamically with the shared lib(tạo liên kết động với thư viện shared)
+	
+	gcc obj/main.o -L lib/shared_lib -l hi -o bin/examble
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

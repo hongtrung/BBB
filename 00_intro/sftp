@@ -1,0 +1,16 @@
+open vscode
+crtl+shift+p
+sftp ssh
+open folder
+
+{
+"name": "Server_sftp",
+"host": "192.168.1.9",
+"protocol": "sftp",
+"port": 22,
+"usename": "trungdoan"
+"remotePath": "home/...",
+"uploadOnSave": true,
+"useTempFile": true,
+"openSsh": true
+}
