@@ -394,12 +394,170 @@ struct flock fl{
         fl.l_whence = SEEK_SET;                 // how to interpret: SEEK_SET, SEEK_CUR, SEEK_END
 }
 
+------------------------------------------------------------------------------------------------------------------
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>BUỔI 4 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Giới thiệu 
+* chương trình (program) và tiến trình (process) là 2 thuật ngữ có liên quan tới nhau
+* cần phải phân biệt giữa tiến trình và chương trình
+* mỗi 1 process có 1 mã vùng dùng để định danh gọi là process id (PID), đây là một số nguyên dương và duy nhất cho mỗi process trên hệ thống.
+* Program là một nhóm các câu lệnh thục thi nhiệm vụ cụ thể, được cụ thể bằng các file thực thi và nằm trên ổ cứng máy tính
+* process là 1 chương trình đang được thực thi và sử dụng tài nguyên của hệ thống
+
+* sử dụng lệnh top để kiểm tra các process đang chạy trong hệ thống
+* lệnh ps, ps a, ps aux | grep <tên tiến trình> để xem PID
+ 
+ file descriptor # PID
+định danh của file duy nhất trong process
+định danh của process duy nhất trong toàn bộ hệ thống
 
 
+I) Command-line Arguments
+* mỗi một chương trình đều bắt đầu khởi chạy từ hàm main().
+* Khi chạy chương trình, các tham số môi trường (command-line arguments) sẽ được truyền qua hai đối số trong hàm main().
+	+ argc: số lượng tham số truyền vào hàm main()
+	+ argv(): mảng con trỏ, trỏ tới các tham số được truyền cho chương trình đó.
 
 
+----------------------------------------------------------------------------
+****MEMORY LAYOUT của 1 process****
 
+		kernel
+	0xC0000000	
+		->argv, environ 
+		-> stack(grows downwards)
+	top of stack
+		-> (unallocated memory)
+	program break
+từ đây xuống dưới là vùng	increasing virtual addesses 
+		-> Heap(grows upwards)
+		-> Uninitialized data(bss) 
+		-> initialized data
+		-> text segments (program code)
+		-> 0x08048000
+		   0x00000000
+* bộ nhớ cấp phát cho mỗi 1 process được chia thành nhiều phần khác nhau. Thông thường chúng sẽ được gọi là các segments (các phân đoạn vùng nhớ).
 
+	- Text segments(vùng nhớ văn bản): chứa các chỉ lệnh ngôn ngữ máy(machine-language) của program. vd: printf(".........");
+		Segment này có quyền read-only
+		
+	- Initialized data segment(vùng nhớ được khởi tại): bao gồm các biến global và biến static đã được khởi tạo 1 cách tường minh.
+		Segment này có quyền read, write
+		vd: int a = 5;(biến global tường minh)
+		    static int a = 5;
+	- Uninitialized data segment(bss): bao gồm các biến global và biến static không được khởi tạo tường minh.
+		Segment này có quyền read, write.
+		vd: int a;
+		    static int a;
+
+	- Stack segment: có thể co dãn vùng nhớ bằng cách cấp phát hoặc giải phóng các stack frames.
+		Segment này có quyền read, write
+	- Heap segment: dành cho việc cấp phát bộ nhớ một cách tự động. Sử dụng các hàm như alloc(), malloc(), calloc(). Heap có thể co dãn tương tự như stack. Điểm kết thúc của Heap được gọi là program break. Segment này có quyền read, write.
+
+stack frame của các hàm main() trong chương trình.
+khi gọi đến 1 hàm khác trong chương trình, thì sẽ lưu trữ con trỏ vị trí hàm main vừa kết thúc, và lưu trữ các biến local của hàm vừa gọi, để sau khi thực hiện xong sẽ dọn dẹp luôn stack frame của hàm vừa gọi (loại bỏ luôn), trỏ lại đến vị trí hàm main vừa kết thúc.(lưu trữ vị trí con trỏ ở đâu)
+
+----------------------------------------------------------------------
+****THAO TÁC VỚI PROCESS****
+1. Tạo 1 tiến trình mới.
+	- sử dụng system call fork().
+	- tiến trình gọi fork() được gọi là tiến trình cha mẹ(parent process)
+	- tiến trình mới được tạo ra gọi là tiến trình con (child process)
+	- tiến trình init là tiến trình đầu tiên được chạy, là cha của mọi tiến trình khác và có pid là 1
+	
+	kiểu dữ liệu: pid_t : dữ liệu là kiểu số nguyên có dấu có khả năng biểu diễn ID tiến trình
+	getpid(void): trả về pid của tiến trình hiện tại
+	getppid(void): trả về pid của tiến trình cha tiến trình hiện tại.
+	
+2. chạy 1 chương trình mới
+	- trong nhiều trường hợp bạn đang có 1 tiến trình A đang thực thi và bạn muốn chạy 1 chương trình B nào đó từ tiến trình A hoặc con của nó. Điều này hoàn toàn có thể thực hiện được thông qua việc sử dụng 1 danh sách các hàm thuộc dòng exec.
+	
+	- int execle(const char* pathname, const char* arg,...);
+	- int execlp(const char* filename, const char* arg,...);
+	- int execvp(const char* filename, const char* arg[]);
+	- int execv(const char* pathname, const char* arg[]);
+	- int execl(const char* pathname, const char* arg,...);
+
+3. Kết thúc tiến trình
+	- Kết thúc bình thường (normally termination)
+		+ Một process có thể hoàn thành việc thực thi của nó một cách bình thường bằng cách gọi system call _exit() hoặc dùng hàm exit()
+		+ _exit(): void _exit(int status);
+		+ exit(): void exit(int status);
+	- Kết thúc bất thường (abnormally termination)
+		+ một process có thể bị kết thúc bằng cách sử dụng lệnh kill trong linux: kill -9 <PID>
+		+kill -l: hiển thị sig
+	
+------------------------------------------------------------------------------
+>>>>>>>>>>>>>>>>PROCESS MANAGEMENT<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+1. bài toán quản lý tiến trình
+2. System call wait() và waitpid()
+3. Tiến trình Orphane(mồ côi) và Zombie(xác sống)
+4. Ngăn ngừa tiến trình Zombie
+	
+	
+I. Bài toán quản lý tiến trình.
+* một trong các triết lý về lập trình đó là "do one thing and do it well", làm một việc và làm tốt điều đó.
+* Quản lý tiến trình về cơ bản được thực hiện bởi một vài system call, mỗi lệnh có mục đích (đơn giản). các lệnh này sau đó có thể được kết hợp để thực hiện các hành vi phức tạp hơn.
+
+II. System call wait()
+* System call wait() được sử dụng theo dõi trạng thái kết thúc của một trong các tiến trình con mà tiến trình cha tạo ra
+	#include<sys/wait.h>
+	
+	pid_t wait(int* status);
+	
+parent process A --> B, C, D
+gọi wait(); chờ đợi cho đến khi B, C, D kết thúc thì mới trả về status
+retval = wait(&status)
+return 0; bản chất là exit(0)
+
+CÁCH THỨC HOẠT ĐỘNG CỦA WAIT()
+* Tại thời điểm wait() được gọi, nó sẽ block cho đến khi có 1 tiến trình con kết thúc hoặc thay đổi trạng thái. Nếu tồn tại 1 tiến trình con đã kết thúc trước thời điểm gọi wait(), nó sẽ return ngay lập tức.
+* Nếu status khác -1, status sẽ trỏ tới 1 giá trị là 1 số nguyên, giá trị này là thông tin về trạng thái kết thúc tiến trình.
+* Khi wait() kết thúc, nó sẽ trả về giá trị PID của tiến trình con hoặc -1 nếu lỗi.
+		- Trạng thái của 1 tiến trình
+			+ S: Sleeping
+			+ R: Running
+			+ W: waiting
+			+ T: suspended
+			+ Z: zombie (defunct)
+* System call wait() tồn tại một số hạn chế:
+	- nếu tiến trình cha tạo ra nhiều tiến trình con(mutliple children), nó không thể dùng wait() để theo dõi một tiến trình con cụ thể. 
+	- waitpid() được sinh ra để giải quyết vấn đề này.
+	
+	@param[in] pid 	pid > 0, PID của tiến trình con cụ thể mà wait muốn theo dõi.		
+			pid = 0, ít sử dụng
+			pid <-1, ít sử dụng
+			pid ==-1, chờ bất cứ tiến trình con nào phụ thuộc về tiến trình cha - giống wait()
+	
+	@param[out] status 	trạng thái kết thúc của tiến trình con
+	@param[in] options	Thông thường chúng ta sẽ sử dụng NULL ở trường này
+	
+	@return		trả về PID của tiến trình con nếu thành công, -1 nếu lỗi
+	
+	pid_t waitpid(pid_t pid, int* status, int options);	
+
+III. Tiến trình Orphane và Zombie
+* vòng đời của các tiến trình cha con thường không giống nhau. Tiến trình cha sống lâu hơn tiến trình con và ngược lại.
+		2 câu hỏi được đặt ra:
+			Nếu tiến trình cha kết thúc trước tiến trình còn, vậy tiến trình con rơi vào trạng thái orphane(mồ côi), vậy ai sẽ là cha mới của nó?
+			Điều gì sẽ xảy ra nếu tiến trình con kết thúc trước khi tiến trình cha kịp gọi wait()?
+			
+
+*Tiến trình Orphane- Mồ côi.
+	** nếu tiến trình cha kết thúc trong khi 1 hoặc nhiều tiến trình con của nó vẫn đang chạy, khi đó các tiến trình con đó sẽ trở thành các tiến trình mồ côi (orphane). 
+	** tiến trình mồ côi sẽ được chấp nhận bởi tiến trình init có PID(1), và tiến trình init sẽ hoàn thành công việc thu thập trạng thái cho chúng.
+
+*Tiến trình Zombie
+	** Nếu tiến trình con kết thúc trước tiến trình cha được tạo ra, nó không hoàn toàn được giải phóng khỏi hệ thống mà rơi vào trạng thái Zombie.
+	** Lúc này tài nguyên dành cho tiến trình được giải phóng, và chỉ giữ lại một số thông tin cơ bản như PID, trạng thai kết thúc tiến trình.
+	** tiến trình bị xóa khỏi hệ thống khi tiến trình cha gọi wait() hoặc waitpid().
+	
+* Ngăn ngừa tiến trình Zombie
+	** có 1 bảng process ID (PID) cho mỗi hệ thông, Kích thước của bảng này là hữu hạn.
+	** nếu quá nhiều tiến trình zombie được tạo, thì bảng này sẽ đầy. Tức là hệ thống sẽ không thể tạo ra bất kì tiến trình mới nào, khi đó hệ thống sẽ đi đến trạng thái ngưng hoạt động.
+	Có 2 cách xử lý:
+		- luôn hiện gọi wait() ở tiến trình cha
+		- khi tiến trình con kết thúc, một tín hiệu SIGCHLD sẽ được gửi tới tiến trình cha của nó 
 
 
 

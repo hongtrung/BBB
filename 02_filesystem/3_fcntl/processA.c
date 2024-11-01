@@ -35,7 +35,7 @@ int main(void)
 	fl.l_start = 1;				// offset vi tri lock dau tien
 	fl.l_len = 5;				// number of bytes to lock, 0 means lock "until EOF" 
 	fl.l_type = F_WRLCK;			// lock type: F_RDLCK, F_WRLCK, F_UNLCK
-	fl.l_whence = SEEK_SET; 		// how to interpret: SEEK_SET, SEEK_CUR, SEEK_END
+	fl.l_whence = SEEK_CUR; 		// how to interpret: SEEK_SET, SEEK_CUR, SEEK_END
 
 	if (fcntl(fd, F_SETLK, &fl) == -1) 	// F_SETLK: dat lock, bo lock, F_GETLK: doc thong tin lock
 	{

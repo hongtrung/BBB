@@ -19,11 +19,12 @@ int main (void)
 	numb_write = write(fd, buf1, strlen(buf1));
 	printf("write %d bytes to hello.txt\n", numb_write);
 
-	lseek(fd, 2, SEEK_SET);
+	//lseek(fd, 2, SEEK_SET);
 	write(fd, "trungdoan", strlen("trungdoan"));
 
 	close(fd);
-	
+	while(1);
+
 	return 0;
 }
 

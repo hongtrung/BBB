@@ -10,7 +10,7 @@ int main(void)
 	char text[10] = {0};
 	struct flock fl;
 
-	sprintf(text, "trungdh");
+	sprintf(text, "trung123");
 
 	if ((fd = open("./test.txt", O_RDWR)) == -1)
 	{
@@ -22,10 +22,10 @@ int main(void)
 		printf("open file test.txt\n");
 	}
 
-	fl.l_start = 1;			// offset where the lock begins
-	fl.l_len = 5;			// number of bytes to lock
+	fl.l_start = 0;			// offset where the lock begins
+	fl.l_len = -5;			// number of bytes to lock
 	fl.l_type = F_WRLCK;		// Lock type: F_RDLCK, F_WRLCK, F_UNLCK
-	fl.l_whence = SEEK_SET; 	// SEEK_SET, SEEK_CUR, SEEK_END
+	fl.l_whence = SEEK_END; 	// SEEK_SET, SEEK_CUR, SEEK_END
 
 	if (fcntl(fd, F_SETLK, &fl) == -1)
 	{
