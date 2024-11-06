@@ -54,6 +54,42 @@
  	B1.1: phát triển applications.	(TRỌNG TÂM)
  			+ Viết app
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 -----------------------------------------------------------------------------------------------------
 
 
@@ -216,6 +252,32 @@ bước 2: create shared lib
 bước 3: link dynamically with the shared lib(tạo liên kết động với thư viện shared)
 	
 	gcc obj/main.o -L lib/shared_lib -l hi -o bin/examble
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -394,6 +456,35 @@ struct flock fl{
         fl.l_whence = SEEK_SET;                 // how to interpret: SEEK_SET, SEEK_CUR, SEEK_END
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ------------------------------------------------------------------------------------------------------------------
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>BUỔI 4 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -401,7 +492,7 @@ Giới thiệu
 * chương trình (program) và tiến trình (process) là 2 thuật ngữ có liên quan tới nhau
 * cần phải phân biệt giữa tiến trình và chương trình
 * mỗi 1 process có 1 mã vùng dùng để định danh gọi là process id (PID), đây là một số nguyên dương và duy nhất cho mỗi process trên hệ thống.
-* Program là một nhóm các câu lệnh thục thi nhiệm vụ cụ thể, được cụ thể bằng các file thực thi và nằm trên ổ cứng máy tính
+* Program là một nhóm các câu lệnh thực thi nhiệm vụ cụ thể, được cụ thể bằng các file thực thi và nằm trên ổ cứng máy tính
 * process là 1 chương trình đang được thực thi và sử dụng tài nguyên của hệ thống
 
 * sử dụng lệnh top để kiểm tra các process đang chạy trong hệ thống
@@ -583,6 +674,401 @@ III. Tiến trình Orphane và Zombie
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---------------------------------------------------------------------------------------------
+	buổi 5 thread
+	* giới thiệu
+	* nguyên lý hoạt động
+	* so sánh Process với Thread
+	* thao tác với Thread
+
+
+1, Nguyên lý hoạt động
+	Tương tự process, thread được tạo ra với mục đích xử lý đồng thời nhiều công việc cùng lúc (mutil-task)
+	* process: là 1 chương trình đang được thực thi và sử dụng tài nguyên của hệ thống.
+	* Thread: là 1 lightweight process có thế được quản lý độc lập bởi một bộ lập lịch
+	
+
+	- trên một hệ thông mutil core. nhiều threads có thể đơcj hoạt động song song.
+	- nếu 1 thread bị block, các thread khác vẫn hoạt động bình thường
+	- mỗi khi 1 thread được tạo, chúng sẽ được đặt trong stack segments.
+	
+2, context switching( chuyển đổi ngữ cảnh)
+
+	5 trạng thái: Ready, Running, Blocked, Blocked Suspended, Ready Suspended
+	Khi 1 Thread mới được tạo ra: nó ở trạng thái Ready
+	
+	- So sánh Process với Thread:
+* Context switching time: - process cần nhiều thời gian hơn vì chúng nặng hơn
+			- Thread cần ít thời gian hơn vì chúng nhẹ hơn process.
+	+ cùng phân tích lại bài toán: Một Network server được thiết kế để nhận và xử message đến từ nhiều clients khác nhau. Điều này có thể thực hiện bằng việc gọi Fork() tạo ra nhiều process để xử lý dữ liệu cho nhiều clients.
+	+ ta cũng có thể xử lý bài toán trên với việc sử dụng mutil-Thread
+	
+
+* Shared Memory: - Chia sẻ dữ liệu giữa các tiến trình khó khăn hơn, Giao tiếp thông qua cơ chế IPC
+		- các thread trong 1 process có thể chia sẻ dữ liệu với nhau nhanh chóng, dễ dàng
+	+ khi tạo tiến trình với fork(), tiến trình và tiến trình con nằm trên 2 vùng nhớ được phân bố khác nhau. Dẫn tới việc chia sẻ dữ liệu giữa chúng trở nên khó khăn hơn
+	+ Dữ liệu được chia sẻ giữa các Thread trong một tiến trình nhanh và dễ dàng hơn vì chúng nằm trong 1 không gian bộ nhớ của tiến trình
+
+
+* Crashed: - Nếu 1 process bị crashed, process khác vẫn hoạt động bình thường.
+	   - Nếu 1 thread bị crashed, các thread khác chấm dứt ngay lập tức.
+	+ Khi tạo tiến trình với fork(), tiến trình và tiến trình con nằm trên 2 vùng nhớ được phân bố khác nhau, hoạt động độc lập với nhau. Khi 1 tiến trình xảy ra lỗi, tiến trình khác vẫn hoạt động bình thường.
+	+ Các Thread trên 1 tiến trình hoạt động đồng thời với nhau. Khi 1 thread bị crashed sẽ khiến cho các thread khác chấm dứt
+	
+Các process có mối quan hệ đặc biệt(cha-con), thread thì ngang hàng với nhau.
+
+* THREAD ID.
+	- cũng như 1 process được xđ bởi PID, 1 thread trong process được xđ bởi 1 thread ID.
+	- 1 số điểm phải làm rõ:
+		+ PID là duy nhất trên toàn Hệ thống, trong đó Thread ID là duy nhất trong 1 process.
+		+ PID là 1 gtrị số nguyên, nhưng thread id không nhất thiết phải là 1 giá trị số nguyên, nó có thể là 1 structure(thường sử dụng).
+		+ PID có thể được in ra dễ dàng nhưng Thread ID thì không.
+		
+	- Thread ID sẽ được đại diện bởi kiểu pthread_t
+	- phần lớn các trường hợp Thread ID sẽ là 1 structure nên để so sánh 2 thread ID với nhau ta cần 1 function có thể thực hiện việc này (đối với PID là một số nguyên, thì việc so sánh đơn giản hơn)
+	- để làm được việc này ta sử dụng 2 hàm sau:
+		+ pthread_self(); <==> getpid();
+		+ pthread_equal();
+		#include<pthread.h> 
+		 int pthread_equal(pthread_t tid1, pthread_t tid2 )
+	trả về 0 nếu 2 thread khác nhau, trả về # 0 nếu 2 thread bằng nhau
+		 
+		 pthread_t pthread_self(void);
+	trả về thread id của thread đang gọi pthread_self	
+ ứng dụng:
+ 	có 1 ds liên kết: bên trong chứa 2 trường: thread_id_1, data
+ 	từ 1 thread_id_x có thể lấy dữ liệu tương ứng với x, trong danh sách liên kết
+ 	- sd pthread_self lấy ra thread_id_x.
+ 	- sử dụng vòng lặp, sử dụng thread_equal(), truyền vào các thread_id tương ứng, nếu thread_id nào trùng với thread_id_x thì lấy ra ds tương ứng.
+ 	
+ 	
+* thao tác với Thread.
+1. tạo 1 thread mới.
+	- chương trình (program) được khởi chạy và trở thành 1 tiến trình(process), lúc này bản thân tiến trình đó là 1 sigle-thread(tiến trình đơn luồng).
+	- tiến trình tạo nhiều hơn 1 threads đc gọi là multiple-thread(tiến trình đa luồng)
+	- ta có thể kết luận rằng mọi tiến trình đều có ít nhất 1 thread. trong đó, thread chứa hàm main được gọi là main thread.
+	- để tạo 1 thread mới chúng ta sử dụng hàm pthread_create()
+	
+	int pthread_creat(pthread_t* threadID, const pthread_attr_t* attr, void*(*start)(void*), void* arg);
+	+ đối số đầu tiên: một khi tiến trình được gọi thành công, đối số  đầu tiên sẽ giữ thread ID của thread mới được tạo này.
+	+ đối số thứ 2: thông thường giá trị này đặt là NULL
+	+ đối số thứ 3: là một con trỏ hàm(function pointer). Mỗi một thread chạy riêng một function, địa chỉ function này sẽ được truyền tại đối số thứ 3 để linux biết đc thread này bắt đầu chạy từ đâu
+	+ đối số thứ 4: đối số arg được truyền vào có kiểu void. điều này cho phép ta truyền bất kỳ dữ liệu nào vào hàm xử lý của thread. Hoặc giá trị này có thể là NULL nếu ta không muốn truyền bất kỳ đối số nào. 
+
+2. kết thúc với thread
+* kế thúc với thread sử dụng hàm pthread_exit();
+
+	void pthread_exit(void* retval);
+retval là giá trị trả về khi kết thúc thread.
+ + ta thấy hàm này chỉ chấp nhận 1 đối số, đó là giá trị trả về từ thread đang gọi hàm này.
+ + gtrị trả về này được truy cập bởi thread cha đang đợi thread này kết thúc và có thể được truy cập bởi 1 thread khác thông qua pthread_join();
+ 
+
+
+>>>>>>>>>>>>>>>>>>>>THREAD MANAGEMENT <<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+1. QUẢN LÝ THREAD
+
+1.1 thread termination
+	. thread kết thúc 1 cách bth
+	. thread kthúc khi gọi hàm pthread_exit();
+	. thread bị cancel khi gọi hàm pthread_cancel();
+	. bất cứ 1 thread nào gọi hàm exit() or main thread kthúc thì all thread còn lại kthúc ngay lập tức.
+	
+	
+	int pthread_exit(void* retval);
+	1 thread có thể đc kthúc = cách gọi pthread_exit().
+	các đối số: 
+		- *retval chỉ định gtrị của thread, gtrị này có thể thu đc bởi 1 thread # thông qua pthread_join().
+	 	- trả về 0 nếu thành công, < 0 nếu thất bại 
+	 	
+	 int pthread_cancel(pthread_t thread);
+	 pthread_cancel() gửi 1 ycầu kthúc thread tới 1 thread cụ thể
+	 các đối số:
+	 	- thread: threadID của 1 thread cụ thể
+	 	- trả về 0 nếu thành công, < 0 nếu thất bại
+	 	
+1.2 Joinable thread 
+	. để thu đc gtrị kthúc của 1 thread # ta sử dụng pthread_join().
+	. hoạt động này được gọi là joining
+	
+	int pthread_join (pthread_t thread, void** retval);
+	các đối số
+		. thread: threadID của 1 thread cụ thể.
+		. **retval: nếu retval khác NULL, nó sẽ nhận đc giá trị trả về của pthread_exit().
+		. trả về 0 nếu thành công, < 0 nếu thất bại
+
+cách thức hoạt động:
+	- pthread_join() sẽ block cho đến khi 1 thread kthúc(threadID được truyền vào đối số thread), nếu thread đó đã kthúc thì pthread_join return ngay lập tức.
+	- khi thread kthúc, về cơ bản nó sẽ đc xử lý tương tự như 1 zombie process, nếu sl zombie thread ngày càng lớn. 1 lúc nào đó ta ko thể tọa thêm thread được nữa. vai trò của pthread_join tương tự waitpid();
+	Điểm khác biệt giữa pthread_join() và waitpid()
+	pthread_join() chỉ bắt được pthreadID mà được cung cấp
+	waipid(0) có thể bắt được tất cả các trạng thái kthúc của tất cả các process.
+	
+1.3. Detaching a thread (không quan tâm)
+- mặc định, 1 thread là joinable, tức là khi thread kthúc thì 1 thread khác có thể thu được giá trị trả về của thread đó thông qua pthread_join().
+- tuy nhiên, nhiều trường hợp chúng ta ko cần quan tâm về trạng thái kthúc của thread mà chỉ cần hệ thống tự động clean và remove thread 1 cách tự động.
+- trường hợp này chúng ta có thể đặt thread vào trạng thái detached thông qua việc gọi pthread_detached(). 
+	
+	int pthread_detached(pthread_t thread);
+- 1 khi thread bị detached, ta không thể dùng pthread_join() để thu trạng thái kthúc của thread và thread ko thể trở về trạng thái joinable.
+	Các đối số:
+		- thread: Thread ID của 1 thread cụ thể
+		- trả về 0 nếu thành công, < 0 nếu thất bại
+		
+1.4. Thread Synchronization (đồng bộ hóa)
+1.4.1 Synchronization
+	. 1 trong các điểm mạnh của thread đó chính là việc chia sẻ dữ liệu với nhau thông qua các biến global
+	. tuy nhiên, nó sẽ tồn tại 1 số vấn đề đồng bộ
+	. điều gì sẽ xảy ra nếu nhiều thread cùng sửa 1 biến vào cùng 1 thời điểm? hay 1 thread đang cố đọc gtrị của 1 biến trong khi thread khác đang sửa đổi biến đó?
+
+1.4.2 Atomic/Noatomic
+	
+	Atomic: tại 1 thời điểm chỉ có 1 thread duy nhất được truy cập vào tài nguyên đươc chia sẻ(shared resource). vì vậy atomic là an toàn.
+	
+	Noatomic: nhiều threads có thể truy cập vào shared resource cùng 1 thời điểm. vì vậy noatomic là không an toàn.
+	
+1.4.3 Critical Section
+	
+	thuật ngữ critical section được dùng để chỉ đoạn code truy cập vào vùng tài nguyên đc shared resource giữa các threads và việc thực thi nó nằm trong bối cảnh atomic. tức là thời điểm đoạn code đc thực thi sẽ không bị gián đoạn bởi bất cứ 1 thread nào truy cập đồng thời vào shared resource đó.
+	
+1.4.4 Mutex
+	
+	Mutex (mutual exclusion) là 1 kỹ thuật đc sử dụng để đảm bảo rằng tại 1 thời điểm chỉ có 1 thread mới có quyền truy cập vào Shared resource.
+	
+	Việc triển khai mutex nhìn chung thực hiên qua 3 bước:
+		- khởi tại khóa Mutex
+		- thực hiện khóa mutex cho các shared resource trước khi vào critical section
+		- thực hiện truy cập vào shared resource.
+		- mở khóa/giải phóng khóa mutex.
+		
+	* Allocated Mutexes
+		- khóa mutex là 1 biến kiểu pthread_mutex_t. trc khi sdụng thì ta luôn phải khởi tạo khóa mutex.
+		- khóa mutex có thể đc cấp phát tĩnh or động
+		     + pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+		     + int pthread_mutex_init(pthread_mutex_t* mutex, const pthread_mutexattr_t* attr);
+		- khi ko sdụng ta phải hủy mutex bằng:
+			pthread_mutex_destroy(). (khởi tạo tĩnh thì không cần sử dụng hàm này )
+		
+	* Locking and unlocking a mutex
+		- sau khi khởi tạo, khóa mutex rơi vào trạng thái unlocked.
+		- để lock or unlock 1 khóa mutex ta sdụng 2 hàm pthread_mutex_lock() và pthread_mutex_unlock().
+		
+	* int pthread_mutex_lock(pthread_mutex_t* mutex);
+	
+	khi khóa mutex ở trạng thái unlocked, pthread_mutex_lock() sẽ return ngay lập tức. ngược lại, nếu mutex đang locked bởi 1 thread khác thì pthread_mutex_lock() sẽ bị block cho tới khi mutex đc unlock
+	- các đối số:
+		+ *mutex: con trỏ tới khóa mutex
+		+ trả về 0 nếu thành công, < 0 nếu thất bại
+		
+	* int pthread_mutex_unlock(pthread_mutex_t* mutex);
+	
+	Unlock 1 khóa mutex.
+	- các đối số:
+		+ *mutex: con trỏ tới khóa mutex
+		+ trả về 0 nếu thành công, < 0 nếu thất bại
+		
+1.4.6 Mutex deadlocks
+	- hiện tượng 1 thread khóa 1 mutex và không thể thoát được, gọi là mutex deadlocks
+	
+1.4.7 condition variables(biến điều kiện)
+
+	- 1 mutex đc sdụng việc truy cập vào shared variable cùng 1 thời điểm
+	- 1 condition variable đc sdụng để thông báo tới 1 thread khác về sự thay đổi của 1 shared variable và cho phép 1 thread khác block cho tới khi nhận được thông báo.
+
+* ALLOCATED CONDITION VARIABLES 
+	- condition variables là 1 biến kiểu pthread_cond_t.
+	trc khi sd thì ta luôn phải khởi tạo nó.
+	- condition variables có thể đc cấp phát động or tĩnh
+	   + pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+	   + int pthread_cond_init(pthread_cond_t* cond, const pthread_condattr_t* attr);
+	   
+	- khi ko sd ta phải hủy condition variables bằng: pthread_cond_destroy(). (khởi tạo tĩnh thì không cần)
+	
+* SIGNALING/WAITING TRÊN condition variables
+	- 2 hđ chính của condition variables là signal và wait
+		+ pthread_cond_signal(&cond);
+		+ pthread_cond_wait(&cond, &lock);
+		
+--------------------------------------------------------------------------------------
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+----------------------------------------------------------------------------
+>>>>>>>>>>>>> BUỔI 6: SIGNAL <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+1. Giới thiệu
+2. Signal handler
+3. 1 số signals cơ bản
+4. Sending signal
+5. blocking & unblocking signals
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+1. Giới thiệu.
+
+- định nghĩa: Signal là 1 trong những phương thức dùng để giao tiếp liên tiến trình lâu đời nhất của Unix System.
+- signal là 1 software interrupt, là cơ chế xử lý các sự kiện bất đồng bộ (async)
+	VD:
+	   + những sk này có thể bắt nguồn từ bên ngoài như khi người dùng nhấn tổ hợp phím Ctrl + C.
+	   + or các hoạt động trong chương trình như phép chia 1 số cho 0.
+	   
+	- kill -l để xem toàn bộ lệnh signal.
+	
+1.1 Signal lifecycle
+	* generation: đầu tiên 1 tín hiệu signal đc raised/sent/generated
+	* delivery: 1 signal đc pending cho tới khi nó đc phân phối.
+	* processing: 1 khi tín hiệu đc phân phối, nó có thể đc xử lý bởi nhiều cách.
+		+ ignore the signal (phớt lờ tín hiệu)
+			. ko action nào đc thực hiện
+			. SIGKILL và SIGSTOP không thể bị ignore
+		+ catch and handle the signal
+			. kernel sẽ tạm dừng thực thi main thread và nhảy tới hàm xử lý signal đc user đk trong process(signal handler)
+			. SIGINT và SIGTERM là 2 signal thường đc dùng
+			. SIGKILL và SIGSTOP không thể catch
+		+ perform the default action
+			. Hành động này phụ thuộc vào từng loại signal.
+		 
+1.2 Signal handler
+
+	sighandler_t signal(int signo, sighandler_t handler);
+	 
+	các đối số:
+		+ signo: signal number
+		handler: signal handler
+	- Chúng ta đk việc xử lý 1 signal thông qua system call signal()
+	- signal là 1 software interrupt nên nó khá nhạy cảm về mặt thời gian thực thi. Khi signal handler đc thực thi nó sẽ chiếmm hoàn toàn cpu của process.
+	- cần phải thoát ra hàm xử lý signal nhanh nhất có thể 
+	
+	
+1.3 Một số SIGNAL cơ bản
+	- SIGKILL: chỉ có thể gửi bằng system call kill(). process ko thể caught or ignored. mặc định sẽ kthúc tiến trình đc chỉ định
+	- SIGTERM:  chỉ có thể gửi bằng system call kill(). mặc định sẽ kthúc tiến trình đc chỉ định, tuy nhiên process có thể catch tín hiệu này và dọn dẹp trước khi kết thúc
+	- SIGINT: tín hiệu này đc gửi tới các process trong nhóm foreground process. mặc định kết thúc tiến trình hiện tại
+	- SIGCHLD: bất cứ khi nào 1 tiến trình dừng lại, nó sẽ gửi SIGCHLD tới process cha của nó. Mặc định SIGCHLD bị ignored.
+	- SIGSTOP: chỉ có thể gửi bằng system call kill(). process ko thể caught or ignored. Mặc định sẽ tạm dừng process đc chỉ định
+	- SIGSR1/SIGSR2: Signal có sẵn cho ngừoi dùng tự định nghĩa.
+	
+1.4 Sending signal
+
+	- Signal có thể đc gửi qua hàm system call kill() trong mã nguồn.
+	- ngoài ra cso thể gửi thông qua command kill trên terminal
+	- có thể tự gửi signal đến bản thân tiến trình đó thông qua việc sử dụng hàm getpid().
+	
+	int kill (pid_t pid, int signo);// gửi signal tới 1 process có pid cụ thể
+	- các đối số:
+		+ pid: pid của 1 process
+		+ signo: signal number
+		+ trả về 0 nếu thành công, trả về < 0 nếu thất bại.
+	
+1.5 blocking và unblocking signal
+
+	- khái niệm: 
+	  + signal làm giám đoạn quá trình thực thi của process. Điều này trong nhiều trường hợp ko đc mong muốn xảy ra khi process đang thực thi một số đoạn mã quan trọng. Blocking signal dẽ giúp giải quyết vấn đề này.
+	  + mỗi 1 process có thể chỉ định signal cụ thể nào đó mà nó muốn block. Nếu Signal bị block vẫn xảy ra thì nó sẽ đc kernel giữ vào hàng chờ xử lý(pending).
+	  + tín hiệu chỉ đc gửi tới process sau khi nó đc unblocking
+	  + DS các Signal bị block đc gọi là signal mask
+	  
+1.5.1 SIGNAL SETS
+
+	* int sigemptyset(sigset_t* set);// tất cả các cờ trong signal table về 0
+	* int sigfillset(sigset_t* set);// tất cả các cờ trong signal table lên 1
+	* int sigaddset(sigset_t* set, int signo); signo nào đc nhắc đến lên 1
+	* int sigdelset(sigset_t* set, int signo); signo nào đc nhắc đến về 0
+	* int sigismember(const sigset_t* set, int signo); nếu return trả về 1 thì signo đang đc set trong mask, 0 thì signo ko đc set trong mask, -1 là lỗi	
+	
+	
+SIGNAL MASK CỦA PROCESS: thuộc tích vốn có của process khi đc tạo ra 
+ 
+SIGNAL MASK TẠM THỜI: thuộc tính muốn thay đổi, dùng để gán vào signal mask của process.
+
+1.5.2 Blocking signals.
+
+	- int sigpromask( int how, const sigset_t* newset, sigset_t* oldset );
+	  + how
+	  	. SIG_SETMASK: signal mask của process sẽ bị thay đổi thành newset.
+	  	. SIG_SETMASK: newset sẽ đc thêm vào signal mask (phép OR)
+	  	. SIG_UNBLOCK: newset sẽ bị xóa khỏi signal mask
+	  + nếu oldset khác NULL, sigpromask sẽ lấy ra đc signal mask hiện tại và lưu vào oldset.
+	  + nếu newset là NULL, sigpromask sẽ bỏ qua việc thay đổi giá trị của signal mask, nhưng nó sẽ lấy ra đc signal mask hiện tại và lưu vào oldset. nói cách khác, truyền NULL vào set như 1 cách lấy ra signal mask hiện tại.
+	  
+	- để lấy ra signal mask của process ta truyền newset == NULL.	sigpromask(int how, NULL , sigset_t* oldset );
+	- để kiểm tra 1 signal có bị block hay unblock. sigismember(oldset, int signo);
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 
 
