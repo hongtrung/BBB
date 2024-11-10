@@ -1043,6 +1043,193 @@ SIGNAL MASK TẠM THỜI: thuộc tính muốn thay đổi, dùng để gán và
 	
 
 	
+>>>>>>>>>>>>>>cách sử dụng và ý nghĩa biến: volatile<<<<<<<<<<<<<<<<
+	
+Ý nghĩa của volatile
+Khi khai báo một biến là volatile, trình biên dịch hiểu rằng:
+
+Giá trị của biến có thể thay đổi bất cứ lúc nào, có thể do tác động từ bên ngoài chương trình.
+Mọi lần truy cập vào biến volatile, chương trình sẽ đọc trực tiếp từ bộ nhớ thay vì sử dụng giá trị đã lưu trong các thanh ghi CPU hoặc tối ưu hóa nó.
+
+Điều này đặc biệt hữu ích trong các trường hợp như:
+
+Lập trình hệ thống nhúng: Biến volatile có thể được sử dụng để lưu trữ giá trị đọc từ các thanh ghi phần cứng, bộ đếm hoặc trạng thái của các thiết bị ngoại vi, và giá trị của các thanh ghi này có thể thay đổi mà không được kiểm soát bởi chương trình.
+Đa luồng: Biến volatile dùng để lưu trữ giá trị mà các luồng khác nhau cùng sử dụng hoặc thay đổi, giúp đảm bảo rằng mọi luồng luôn nhìn thấy giá trị mới nhất của biến đó.
+Bộ nhớ dùng chung với các tín hiệu: Trong ngữ cảnh xử lý tín hiệu hoặc các tín hiệu ngắt (interrupt), biến volatile đảm bảo rằng trình biên dịch sẽ không loại bỏ các câu lệnh hoặc dữ liệu có thể được thay đổi ngoài dự đoán.
+	
+	
+====================================================================================================================================
+BUổi 7: Socket
+1.giới thiệu
+2.flow hoạt động
+3. Sockets: Internet Domain Socket
+4. Sockets: Unix Domain
+
+
+1. Định nghĩa
+- socket là cơ chế truyền thông cho phép các tiến trình có thể giao tiếp với nhau dù các tiến trình có ở trên cũng 1 thiết bị hay khác thiết bị.
+- socket đc đại diện bởi 1 file socket descriptor
+- thông tin đc mô tả trong 1 file socket bao gồm: domain, type, protocol.
+
+1.1 Domain (tên miền)
+
+- tiến trình cần giao tiếp nằm trên cùng thiết bị hay khác thiết bị. Socket có 2 domain chính là: Internet Domain và UNIX Domain.
+	- Domain--> Unix Domain		(protocol AF_UNIX)
+		--> Internet Domain --> IP v4 (tập trung)	(protocol AF_INET)
+				    --> IP v6			(protocol AF_INET6)
+	 	
+1.2 Type (cách thức truyền dữ liệu)
+- mô tả cơ chế truyền nhận thông tin 
+- socket có 2 type phổ biến là: + Stream socket (TCP)
+				+ Datagram socket (UDP)
+				
+		Stream Socket(message, file)			Datagram Socket(audio, video)
+	Tin cậy( đảm bảo dữ liệu nhận được		Không tin cậy( Dữ liệu nhận được có thể
+	theo thứ tự, có thông báo nếu lỗi 		ko theo thứ tự, dữ liệu có thể mất trong
+	xảy ra)					quá trình truyền mà ko có thông báo)
+							
+	Yêu cầu tạo kết nối trước khi trao đổi	Ko cần tạo kết nối trc khi trao đổi dữ liệu.
+							Dữ liệu có thể đc gửi đi ngay cả khi tiến
+							trình đích ko tồn tại.
+							
+	Thường được dùng khi dữ liệu cần truyền	thường dùng nếu dữ liệu cần truyền là các gói tin
+	là chuỗi bit 	
+	
+1.3 Protocol(kiểu đóng gói dữ liệu)
+- cách thức đóng gói dữ liệu
+- Từ domain và type sẽ có 1 ds các protocol tương ứng để ta lựa chọn.
+- thông thường với 1 Domain và Type đã chọn chỉ có 1 giao thức có thể dùng nên protocol thường có gtrị 0.
+	+ Domain--> Unix Domain		(protocol AF_UNIX)
+		--> Internet Domain --> IP v4 	(protocol AF_INET)
+				    --> IP v6	(protocol AF_INET6)
+	+ Type
+	
+2. Flow hoạt động
+2.1 Flow hoạt động của Stream Socket
+	- stream socket yêu cầu tạo 1 kết nối trước khi truyền dữ liệu.
+	- tiến trình khởi tạo kết nối đóng vai trò là Client, tiến trình nhận được yêu cầu kết nối là Server
+	
+	
+	
+	
+	
+	
+	
+	
+====================================================================================================================================	
+	
+	
+Buổi 8 pipe va fifo
+
+1. giới thiệu.
+
+1.1 định nghĩa
+	- Pipes là 1 trong số các phương thức IPC được sử dụng trong việc truyền thông liên tiến trình.
+	- Pipes	chỉ giao tiếp 1 chiều, tức là chúng ta chỉ có thể sử dụng pipe sao cho 1 quá trình thực hiện ghi vào pipe quá trình kia đọc từ pipe
+	- Truyền vào mảng fd[] gồm 2 phần tử, fd[1]: đầu write, fd[0]: đầu read
+	
+1.2 Hoạt động
+	- Khi tạo 1 pipe, nó sẽ nằm trong RAM và được coi là 1 "virtual file"
+	- Pipes có thể sử dụng trong quá trình tạo process
+	- Khi 1 process ghi vào "virtual file" (hoặc có thể hiểu là pipe) thì 1 tiến trình liên quan(related-process) khác có thể đọc dữ liệu từ nó.
+	- Tốc độ đọc ghi trên Ram rất là nhanh
+	
+	* Reading from a pipe:
+		- Nếu cố gắng đọc dữ liệu từ 1 pipe "rỗng", thì đầu read sẽ block cho đến khi đọc được ít nhất 1 bytes.
+		- Nếu đầu write của 1 đg ống bị đóng, đầu read đọc lại toàn bộ dữ liệu còn lại trong pipe và return 0.
+	
+	* Pipes have a limited capacity:
+		- 1 pipe chỉ đơn giản là 1 bộ đệm đc duy trì trong bộ nhớ
+		- Bộ đệm này có dung lượng tối đa. Khi 1 pipe đã đầy, chỉ khi khi đầu read lấy 1 số dữ liệu khỏi pipe thì đầu write mới có thể ghi tiếp dữ liệu vào pipe.
+		
+2. Tạo và sd PIPES
+
+2.1 Tạo pipes
+		int pipe(int fd[2])
+	- Tạo 1 pipe mới. Trả về 2 file descriptor (fd) nằm trong fds.
+	- Các đối số:
+		+ fds[0] 	file descriptor chiều read của pipe
+		+ fds[1] 	file descriptor chiều write của pipe
+		+ trả về 0 nếu thành công, -1 nếu thất bại.
+	- pipe()
+	- Nếu ta tạo pipe trc khi gọi fork(). thì parent and child (related-process) có thể giao tiếp thông qua pipe. 
+	
+2.2 Giao tiếp 2 chiều
+	- chỉ cần tạo 2 pipe để gửi dữ liệu theo từng hướng giữa 2 tiến trình
+	- cần cảnh giác với các trường hợp bế tắc có thể xảy ra nếu cả 2 quy trình bị block trong khi 
+		+ cố gắng đọc từ các pipe rỗng 
+		+ cố gắng ghi vào các pipe đã đầy
+	
+	- Parent đóng cái trò writer
+	- Child đóng vai trò reader
+	
+3. FIFOs - named Pipes
+3.1 Định nghĩa
+
+	- Đây là 1 khái niệm mở rộng của pipé. Pipé truyền thống thì ko đc đặt tên và chỉ tồn tại trong suốt vòng đời của process.
+	- Sự khác biệt chính là FIFÓ có tên trong hệ thống tệp đc mở giống như 1 tệp thông thường.
+	- Named Pipes có thể tồn tại miễn là hệ thống còn hoạt động. Vượt ra ngoài vòng đời của process. Có thể xóa đi nếu không còn sd.
+	- 1 file FIFO là 1 file đặc biệt đc lưu trong bộ nhớ cục bộ, đc tạo ra bỏi hàm mkfifo() trong C.
+	
+3.2 Tạo FIFOs từ trình shell 
+
+- lệnh mkfifo [ -m mode ] pathname
+	vd: mkfifo -m 0666 ./helloFIFO
+	
+	
+3.3 tạo fifo từ source code
+	
+	#define FIFO_FILE "./myfifo"
+	mkfifo(FIFO_FILE, 0666);
+	
+4. XÂY DỰNG MÔ HÌNH CLIENT - SERVER WITH FIFOs
+ 	Bài toán: Xây dựng 1 mô hình client server sử dụng FIFÓ
+ 	
+ 	B1: Thiết lập kết nối
+ 		+ làm sao để client biết tới server?
+ 		+ well-know address/name
+ 			vị trí cố định
+ 		+ Server được định danh.
+ 			. cung cấp nhiều services
+ 			. client phải request tới để đk
+ 			. thêm chi phí (tiền, lập trình)
+	
+	
+	 B2: Xử lý yêu cầu kết nối.
+	 	-Server:
+	 		+ tạo 1 fifo xử lý request.
+	 		+ xử lý bản tin request
+	 			. check key
+	 			. check service.
+	 			. Giới hạn số lượng kết nối.
+	 		+ gửi ack chấp nhận/ không chấp nhận request
+	 		
+	 	-Client:
+	 		+ tạo fifo gửi, nhận bản tin
+	 			. Tên = TEMPLATE+PID
+	 		+ đóng bản tin request
+	 			. tên
+	 			. yêu cầu service nào
+	 			. key
+	 		+ gửi request tới server
+	 			. Server chấp nhận -> gửi nhận dữ liệu	
+	 			. Server ko chấp nhận -> hủy bỏ FIFO 
+	B3: Xử lý bản tin.
+		- Nhớ lại rằng dữ liệu trong đường ống và FIFO là 1 luồng byte, ranh giới giữa nhiều bản tin không được bảo toàn.
+		- Điều này có nghĩa là khi nhiều bản tin gửi đến 1 quá trình, chẳng hạn như Server thì người gửi và người nhận phải đồng ý về 1 số quy ước để tách các thư.
+			+ kết thúc mỗi thư bằng ký tự phân cách.
+				-> Ký tự ko bao giờ xuất hiện như 1 phần bản tin.
+				-> quá trình đọc thông báo phải quét dữ liệu từ FIFO từng byte 1 cho đến khi tìm thấy ký tự phân tách.
+			+ Bao gồm header có kích thước ổn định với trường độ dài trong mỗi bản tin.
+				-> hiệu quả đối với các bản tin có kích thước tùy ý.
+				-> dẫn đến sự cố nếu bản tin không đúng định dạng.
+			+ Sử dụng các bản tin có độ dài cố định và yêu cầu Server luôn đọc bản tin có kích thước cố định này.
+				-> điều này có lợi thế là đơn giản để lập trình
+				-> dung lượng kênh truyền bị lãng phí.
+				-> nếu 1 tin nhắn ko có độ dài phù hợp, thì tất cả các tin nhắn tiếp theo sẽ bị lệch. Trong trường hợp này, Server không thể khôi phục dễ dàng.
+				
+	
+	
 	
 	
 	
