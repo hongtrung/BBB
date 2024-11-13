@@ -10,7 +10,7 @@
 
 #define FIFO_FILE "./myFifo"
 
-#define message "hello"
+#define message "hello child, how are you?"
 int fd;
 pthread_t child_read_thread, parent_write_thread;
 pid_t child_pid;
@@ -20,20 +20,17 @@ void parent_sig_handle1(int num)
     if(num == SIGUSR1)
     {
         printf("Parent received SIGINT from child\n");
-        sleep(1);
     }
 }
 
 // ham xu ly process child
-void child_sig_handle1(int num)
-{
-    if(num == SIGUSR1)
-    {
-        printf("Child received SIGINT from parent. Starting to read from FIFO\n");
-        sleep(1);
-    }
-
-}
+// void child_sig_handle1(int num)
+// {
+//     if(num == SIGUSR1)
+//     {
+//         printf("Child received SIGINT from parent. Starting to read from FIFO\n");
+//     }
+// }
 
 // parent write in fifo 
 void* worker_parent(void* arg)
@@ -63,9 +60,10 @@ void* worker_child(void* arg)
         perror("Failed to open FIFO for reading\n");
         pthread_exit(NULL);
     }
-    char buff[1000];
+    char buff[100];
    
     read(fd, buff, sizeof(buff));
+    printf("Child received SIGINT from parent. Starting to read from FIFO\n");
     printf("Child read message from FIFO: %s\n", buff);
     sleep(1);
     close(fd);
@@ -86,7 +84,7 @@ int main()
     else if (child_pid == 0)     // child
     {
         
-        signal(SIGUSR1, child_sig_handle1); 
+        //signal(SIGUSR1, child_sig_handle1); 
         //create child read thread
         ret = pthread_create(&child_read_thread,NULL, worker_child, NULL);
         if(ret != 0)
