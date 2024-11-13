@@ -1080,8 +1080,8 @@ BUổi 7: Socket
 	 	
 1.2 Type (cách thức truyền dữ liệu)
 - mô tả cơ chế truyền nhận thông tin 
-- socket có 2 type phổ biến là: + Stream socket (TCP)
-				+ Datagram socket (UDP)
+- socket có 2 type phổ biến là: + Stream socket (TCP)		SOCK_STREAM
+				+ Datagram socket (UDP)		SOCK_DGRAM
 				
 		Stream Socket(message, file)			Datagram Socket(audio, video)
 	Tin cậy( đảm bảo dữ liệu nhận được		Không tin cậy( Dữ liệu nhận được có thể
@@ -1109,17 +1109,198 @@ BUổi 7: Socket
 	- stream socket yêu cầu tạo 1 kết nối trước khi truyền dữ liệu.
 	- tiến trình khởi tạo kết nối đóng vai trò là Client, tiến trình nhận được yêu cầu kết nối là Server
 	
+	* 1 bộ server system call():
+		+ Passive socket: socket(), bind(), listen(), accept().
+		+ read(), write(), close().
+		
+	VD: Domain: IPV4
+	    Type: Stream
+	    Protocol: 0
+	    
+* CREATE SOCKET:
+		server_fd = socket(<domain>, <type>, protocol);
+		
+	server_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if( server_fd == -1)
+		handle_error ("socket());
+	
+	trả về 0 nếu thành công, -1 nếu thất bại
+	
+* Đăng ký ADDRESS cho socket
+	serv_addr.sin_family = AF_INET;
+   	serv_addr.sin_port = htons(port_no);
+    	serv_addr.sin_addr.s_addr = INADDR_ANY;
+    	
+* Binding(gắn địa chỉ cho socket)
+	if (bind(server_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1)
+        handle_error("bind()");
+* Listen(): lắng nghe tối đa bao nhiêu client
+	if (listen(server_fd, LISTEN_BACKLOG) == -1)
+        handle_error("listen()");
+* Accept()
+	new_socket_fd = accept(server_fd, (struct sockaddr *)&client_addr, (socklen_t *)&len);
+        if (new_socket_fd == -1)
+            handle_error("accept()");
+
+        system("clear");
+*Close(server_fd);
+	
+	* 1 bộ client system call():
+		+ Active socket: socket(), connect().
+		+ read(), write(), close().
+	
+2.2 Flow hoạt động của Datagram Socket
+
+	- vai trò của client và server khá mờ nhạt
+	- các tiến trình gửi dữ liệu đến 1 địa chỉ bất kể nó có tồn tại hay không
+	- trong quá trình truyền nhận, tạm coi tiến trình muốn gửi dữ liệu là client và tiến trình nhận dữ liệu là server.
+	
+	* 1 bộ server program call():
+		+ socket(), bind()
+		+ recvfrom(), sendto(), close().
+
+	VD: Domain: IPV4
+	    Type: Datagram
+	    Protocol: 0	
+	
+* CREATE SOCKET:	
+	fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if(fd == -1)
+		handle_error ("socket());
+		
+* Binding(gắn địa chỉ cho socket)
+	if (bind(fd, (struct sockaddr *)&svaddr, sizeof(struct sockaddr_in)) == -1)
+        handle_error("bind()");	
+	
+* RECVFROM()
+	numBytes = recvfrom(fd, buf, BUF_SIZE, 0, (struct sockaddr *)&claddr, &len);
+        if (numBytes == -1)
+            return 1;
+* SENDTO()
+	if (sendto(fd, buf, numBytes, 0, (struct sockaddr *)&claddr, len) != numBytes)
+            printf("sendto error\n");
+		
+* close(fd);
+		
+	* 1 bộ client program call():
+		+ socket()
+		+ sendto(), recvfrom(), close().	
+		
+3. Sockét: Internet Domain Socket
+
+3.1 Internet Socket Address
+	- Dùng để giao tiếp giữa các tiến trònh nằm trên các thiết bị khác nhau.
+	- Domain: AF_INET/ AF_INET6
+	- Socket chỉ có 1 kiểu địa chỉ duy nhất là sockaddr
+	- Tuy nhiên để tiện cho việc sử dụng với từng Domain Socket khác nhau ngta định nghĩa thêm các strúct địa chỉ riêng cho từng domain sau đó ép kiểu về struct socaddr
+	
+		struct sockaddr
+		{
+			sa_family_t sa_family;	// address family, AF_XXX
+			char 	sa_data[14];	// 14 bytes ò protocol address
+		};
+
+3.1.1 IPv4 Socket Address
+
+	struct sockaddr_in
+	{	
+		sa_family_t sin_family;		// address family (AF_INET)
+		in_port_t sin_port;		// Port number
+		struct in_addr sin_addr;	// IPv4 address
+		unsigned char _pad[X];		// pad to size od sockaddr structure (16 bytes)
+	};
+	
+	struct in_addr			// IPv4 4-byte address
+	{
+		in_addr_t s_addr;	// unsigned 32 bit integer
+	};
+		
+	INADDR_ANY: cờ tùy chỉnh địa chỉ IP
 	
 	
+3.1.2 IPv6 Socket Address
+
+	struct sockaddr_in6
+	{	
+		sa_family_t sin6_family;		// address family (AF_INET6)
+		in_port_t sin6_port;		// Port number
+		unit32_t sin6_flowinfo;		// IPv6 flow information
+		struct in6_addr sin6_addr;	// IPv6 address
+		unit32_t sin6_scope_id;		// Scope ID (new in kernel 2.4)
+	};
 	
+	struct in6_addr			// IPv6 address structure
+	{
+		unit8_t s6_addr[16];	// 16 bytes == 128 bits
+	};
+		
+3.2 Chuyển đổi địa chỉ Socket
+
+	- Địa chỉ của Internet Socket đc đặc trưng bởi địa chỉ IP và Port. Chúng đều đc lưu trữ trên thiết bị  dưới dạng số integer.
+	- các thiết bị sử dụng các kiến trúc phần cứng khác nhau sẽ lưu trữ địa chỉ theo thứ tự khác nhau.
+	- Socket sử dụng 1 quy ước chung về cách lưu trữ địa chỉ gọi là network byte order(thật ra là theo thứ tự  big-endian)
 	
+>>>>>>>>>>>>>Kiểm tra: lscpu | grep "Byte Order"
+			file <name_file>
+	thứ tự sắp xếp các byte
+		+Little endian: 
+		+ Big endian:	
+		
+		serv_addr.sin_port = htons(port_no);
+		Chuyển đổi các biến port_no từ LSB sang MSB
+		
+3.3 Các hàm được sử dụng chuyển đổi địa chỉ Socket
+
+	#include<arpa/inet.h>
+
+	uint16_t htons(uint16_t host_uint16);
+
+	Returns host_unit16 converted to network byty order
+
+
+	uint32_t htonsl(uint32_t host_uint32);
+
+	Returns host_uint32 converted to network byte order
 	
+Ngược lại:
+	#include<arpa/inet.h>
+
+	uint16_t ntohs(uint16_t host_uint16);
+
+	Returns net_unit16 converted to host byte order
+
+
+	uint32_t ntohl(uint32_t host_uint32);
+
+	Returns net_uint32 converted to host byte order
+		
+		
+4. Sockets: Unix domain socket
+
+4.1 Unix socket address
+	- Sau khi chạy bind() để gán địa chỉ cho socket 1 socket file được tạo theo path_name
 	
+	struct sockaddr_un
+	{	
+		sa_family_t sun_family;	// always AF_UNIX
+		char sun_path[108];	// Null-terminated socket pathname
+	};
+	
+	- Ko thể gán 1 socket vào 1 path_name đã tồn tại.
+	- 1 path_name chỉ có thể đc gán cho 1 socket
+	- path_name có thể là đg dẫn tuyệt đối, or tương đối
+	- tuy socket đc đặc trưng bởi 1 socket file nhưng ta ko thể dùng open() để kết nối socket.
+	- sau khi socket đc đóng hay chương trình đã tắt file path_name vẫn còn. Nếu muốn xóa file này ta có thể dùng unlink() hoặc remove();
+	- để kết nối hoặc gửi dữ liệu tới socket yêu cầu tiến trình phải có quyền write với file path_name
+	- lệnh blind() sẽ tạo socket file với đầy đủ các quyền cho tất cả tài khoản nhưng ta có thể thay đổi quyền hạn của chúng bằng umask() or đơn giản là thay đổi quyền của thư mục chứa file socket.
+		
+		
+		
 	
 ====================================================================================================================================	
 	
 	
-Buổi 8 pipe va fifo
+Buổi 8 pipe and fifo
 
 1. giới thiệu.
 
@@ -1166,7 +1347,7 @@ Buổi 8 pipe va fifo
 3. FIFOs - named Pipes
 3.1 Định nghĩa
 
-	- Đây là 1 khái niệm mở rộng của pipé. Pipé truyền thống thì ko đc đặt tên và chỉ tồn tại trong suốt vòng đời của process.
+	- Đây là 1 khái niệm mở rộng của pipes. Pipes truyền thống thì ko đc đặt tên và chỉ tồn tại trong suốt vòng đời của process.
 	- Sự khác biệt chính là FIFÓ có tên trong hệ thống tệp đc mở giống như 1 tệp thông thường.
 	- Named Pipes có thể tồn tại miễn là hệ thống còn hoạt động. Vượt ra ngoài vòng đời của process. Có thể xóa đi nếu không còn sd.
 	- 1 file FIFO là 1 file đặc biệt đc lưu trong bộ nhớ cục bộ, đc tạo ra bỏi hàm mkfifo() trong C.

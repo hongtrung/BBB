@@ -1,0 +1,27 @@
+Bài Tập: Quản lý giao tiếp giữa các tiến trình với FIFO, PID, Signal và Thread
+Mô tả Bài Tập:
+
+Trong bài tập này, chúng ta sẽ xây dựng một chương trình trong đó:
+
+	Tiến trình cha sẽ tạo một FIFO để giao tiếp với tiến trình con.
+Tiến trình cha sẽ gửi tín hiệu SIGUSR1 tới tiến trình con để yêu cầu tiến trình con thực hiện một hành động.
+Tiến trình con sẽ sử dụng một luồng để đọc thông điệp từ FIFO và thực hiện một hành động (ví dụ: in ra thông điệp khi nhận dữ liệu).
+Tiến trình cha sẽ sử dụng luồng để ghi vào FIFO và tiếp tục theo dõi tiến trình con.
+Chúng ta sẽ sử dụng một số kỹ thuật sau:
+
+FIFO: Giao tiếp giữa tiến trình.
+PID: Quản lý và theo dõi các tiến trình.
+Signal: Gửi và nhận tín hiệu giữa các tiến trình.
+Thread: Tạo và quản lý các luồng trong một tiến trình.
+[18:17]
+Kết Quả Dự Kiến:
+
+Tiến trình cha gửi thông điệp qua FIFO.
+Tiến trình con đọc thông điệp từ FIFO và in ra.
+Tiến trình con gửi tín hiệu SIGUSR1 trở lại tiến trình cha.
+Tiến trình cha nhận tín hiệu và in ra thông điệp thông báo rằng tín hiệu đã được nhận.
+
+Các Lưu Ý:
+FIFO cần phải được tạo ra trước khi sử dụng.
+Các luồng phải được tạo và chờ kết thúc bằng pthread_join.
+Tín hiệu phải được cài đặt với signal để tiến trình con có thể nhận và xử lý tín hiệu từ tiến trình cha.
