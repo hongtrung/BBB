@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #define BUF_SIZE 10
 #define SOCK_PATH "./sock_stream"

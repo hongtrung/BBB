@@ -3,6 +3,8 @@
 #include <sys/socket.h>
 #include <stddef.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <string.h>
 
 #define BUF_SIZE 10
 #define PORT_NUM 50002

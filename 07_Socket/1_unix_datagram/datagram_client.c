@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
+#define SO_PASSCRED 16
 #define BUF_SIZE 10
 #define SOCK_PATH "./sock_dgram"
 
@@ -33,6 +34,5 @@ int main(int argc, char *argv[])
         return 1;
     else
         printf("Response : %s\n", resp);
-
     return 0;
 }
