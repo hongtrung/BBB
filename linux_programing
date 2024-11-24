@@ -1573,15 +1573,116 @@ Buổi 9: SHARED MEMORY
 		+ Sử dụng API của shm (System V)
 		+ sử dụng API của mmap (POSIX)
 		
+2. System V shared memory
+	Các bước triển khai
+	- Anonymous Mapping (Mapping vùng nhớ trên RAM)
+		+ Tạo key
+		+ Cấp phát memory segment
+		+ Map/umap shared memory segment
+		+ Giải phóng shared memory segment
+2.1 Tạo key
+	- Shared memory segment đc kernel quản lý bởi 1 IPC structure. mỗi IPC structure sẽ được xác định bởi 1 số nguyên (ko âm) Identifier.
+	- Để có thể Map/Read/Write dữ liệu này vào shared memory segment thì các process phải biết đc số Identifier này.
+	- Indentifier có thể đc tạo thông qua API ftok()
+2.2 Tạo Shared memory segment
+	- Mỗi segment đc liên kết với 1 structure về permission cho việc read/write của process.
+	- trong đó mode là 1 tổ hợp bitwise.
+	- để tạo shared memory segment sd API shmget().
+2.3 Attach/detach vùng shared memory 
+	- attach shared memory segment tới 1 địa chỉ bộ nhớ của chương trình đang gọi .
+	- để làm đc điều này chúng ta sử dụng API shmat()
+	- Để detach vùng nhớ của process khỏi shared memory segment chúng ta sử dụng API shmdt()
+	- Lệnh này không xóa các Identifier và structure của nó khỏi hệ thống. Identifier sẽ tồn tại đến khi tiến trình trong hệ thống gọi 1 tiến trình trong hệ thống gọi shmctl với IPC_RMID command.
+2.4 Giải phóng shared memory segment
+	+ API shmctl() sử dụng để kiểm soát các hoạt động của shared memory segment.
+	+ Chúng ra thường sử dụng system call này cùng với command IPC_RMID để giải phóng hoàn toàn shared memory segment trên hệ thống.
 	
+3. POSIX shared memory
+- các bước triển khai:
+	+ Tạo shared memory object
+	+ Set kích thước cho shared memory object 
+	+ Map/umap shared memory object
+	+ Giải phóng shared memory object
+3.1 Tạo shared memory object
+	- Ở system V shared memory chúng ta có khái niệm Shared memory segment. trong khi đó, Ở POSIX chúng ta có khái niệm shared memory object
+	- cả 2 khái niệm đề là tương đương và ám chỉ về 1 vùng nhớ chia sẻ được giữa 2 process
+	- để tạo Shared memory object chúng ta sử dụng API shm_open().
+3.2 Set size
+	- Khi shared memory object đc tạo ra. kích thước của nó đc khởi tạo bằng 0.
+	- Dó đó ta cần phải set size cho Shared memory object thông qua API ftrunate().
+3.3 Map/unmap
+	- Sử dụng: mmap()
+	- có 4 kiểu memory mapping:
+		+ Private anonymous mapping: 
+		+ Shared anonymous mapping
+		+ Private file mapping
+		+ Shared file mapping
+	- để unmap sử dụng: munmap().
+3.4 giải phóng shared memory object
+	- sử dụng: shm_unlink()
+	- Shared memỏu object sẽ được xóa sau khi process cuối cùng được unmap
+	
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.
 
+Buổi 10. Semaphore
+1.1 Semaphore là gì?
+	- semaphore là cơ chế cho phép đồng bộ truy cập giữa các process và thread
+	- mục đích chính đc sử dụng để block process và thread truy cập vào 1 vùng nhớ (shared memory) mà đang được sử dụng bởi 1 process/thread khác.
+	- có 2 loại semaphore đc sử dụng chủ yếu:
+		+ System V semaphore
+		+ POSIX semaphore
+1.2 Posix semaphore
+- đc đưa ra bởi SUSv3 gồm 2 loại:
+	+ named semaphore: là semaphore đc đặt tên, đc tao open thông qua việc sử dụng hàm sem_open(). các unrelated-process có thể cùng truy cập tới 1 semaphore.
+	+ unnamed semaphore: là semaphore ko đc đặt tên, do ko có name nên phải truy cập vào vùng nhớ dùng chung để sd(shared memory, mmap(), global variabl,...). Đc sd cho việc chia sẻ truy cập giữa các Process or Thread. Đối với Process thì nó là vùng nhớ đc shared (sd system shm hoặc POSIX mmap), với Thread là vùng nhớ mà các thread đc chia sẻ trong chương trình (global or head)
 
+2.1 Hoạt động
+- semaphore là 1 số nguyên có gtrị bị hạn chế >= 0
+- có thể thực hiện nhiều hđ khác nhau trên semaphore(các lệnh call system)
+	+ tăng giá trị htại của semaphore lên 1, sd: sem_post().
+	+ giảm giá trị htại của semaphore xuống 1, sd: sem_wait().
+	+ đọc giá trị htại của semaphore
+	
+2.2 Waiting on semaphore
+- sem_wait()
+- nếu semaphore có gtrị >0, hàm trả về ngay lập tức
+- nếu semaphore có gtrị =0, hàm sẽ block cho đến khi gtrị >0
+- sau khi hàm đc trả về thì gtrị của semaphore giảm đi 1
 
+- sem_trywait() là 1 phiên bản non-blocking của sem_wait()
+- sem_timedwait() chỉ thực hiện chờ trong 1 thời gian nhất định, nếu sau timeout mà giá trị semaphore vẫn =0 thì lỗi sẽ đc trả về là ETIMEDOUT
+2.3 Posting on semaphore
+- sem_post()
+- nếu semaphore có gtrị =0, thì tăng gtrị semaphore value lên 1. Khi đó các process đang chờ sem_wait() sẽ đc đánh thức.
+- Nếu có n` process đang chờ thì kernel sd thuật toán round_robin, time_sharing để quyết định
+- Tức là ko phải process nào wait trc sẽ đc thực hiện trc, mà sau khi sem_post() thì process nào là time slot (tine slice) tiếp theo của cpu sẽ đc thực hiện.
+2.4 Read semaphore value
+- sem_getvalue() 
+- trả về gtrị htại của semaphore
+- gtrị semaphore đc trả về trong con trỏ 
 
+3.1 Opening named semaphore
+- sem_open() đc sd để tạo 1 semaphore mới hoặc mở 1 semaphore đang tồn tại.
+	+ name: tên của semaphore, mỗi tên lk với 1 semaphore object
+	+ oflag: cho biết mode hđ của semaphore.
+		. 0 mở 1 semaphore đang tồn tại
+		. O_CREAT: tạo 1 semaphore
+		. O_CREAT | O_EXCL: tạo và trả về lỗi nếu đã tồn tại 1 semaphore lk với tên đc đưa ra
+		. nếu O_CREAT: thì quan tâm 1 đối số mode và value.
+3.2 Closing named semaphore
+- sem_close();
+3.3 Removing named semaphore
+- sem_unlink();
 
-
-
-
+4.1 Initializing an unnamed semaphore
+- sem_init() đc sd để khởi tạo semaphore và inform cho kernel semaphore đc sử dụng để shared giữa các process hoặc giữa các thread trong 1 process.
+- đối số pshared cho biết liệu semaphore có đc chia sẻ giữa các threads hay giữa các process hay ko.
+	+ pshared = 0; semaphore đc share giữa các thread của process, semaphore đc tạo ra trỏ tới 1 địa chỉ của heap hoặc global.
+	+ pshared # 0; emaphore đc share giữa các thread của process, semaphore sẽ là địa chỉ của 1 vùng nhớ đc shared giữa các process(system V or Posix mmap)
+	+ value: gtrị semaphore đc khởi tạo
+4.2 Destroying an unnamed semaphore
+- sem_destry() hủy semaphore, nó phải là 1 unnamed semaphore đã đc khởi tạo trước đó bằng sem_init()
+- sau khi 1 unnamed semaphore đã bị hủy bằng sem_destoy(), nó có thể khởi động lại bằng sem_init().
 
 
 
