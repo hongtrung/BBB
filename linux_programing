@@ -1415,28 +1415,208 @@ Buổi 8 pipe and fifo
 	
 	
 	
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+* int sock = socket ( int domain, int type, int protocol)
+
+
+Các hàm chuyển đổi số lượng 16bit và 32bit giữa thứ tự byte network và thứ tự byte host
+
+	uint32_t htonl(uint32_t hostlong); 	// chuyển 32bit từ host to net
+	       
+	uint16_t htons(uint16_t hostshort);	// chuyển 16bit từ host to net
+
+	uint32_t ntohl(uint32_t netlong);	// chuyển 32bit từ net to host
+
+	uint16_t ntohs(uint16_t netshort);	// chuyển 16bit từ net to host
+		
+		Các hàm htonl () và htons () sẽ trả về giá trị đối số
+       chuyển đổi từ thứ tự byte của máy chủ sang thứ tự byte của mạng.
+	
+* int bind(int sock_fd, struct sockaddr* addr, socklen_t addrlen);
+
+	- các đối số
+	+ int sock_fd: 1 file descriptor 
+	+ struct sockaddr* addr: gắn cho 1 con trỏ kiểu (struct sockaddr*) 
+	+ socklen_t addrlen: Chỉ định kích thước cho bind, tính bằng byte
+		
+	trả về 0 nếu thành công, -1 nếu thất bại.
+	
+* int listen(int sock_fd, int backlog);
+	- các đối số:
+	+ int sock_fd: 1 file descriptor
+	+ int backlog: số yêu cầu kết nối tối đa
+	
+	trả về 0 nếu thành công, -1 nếu thất bại.
+	
+* int accept(int sock_fd, struct sockaddr* addr, socklen_t* addrlen);
+	
+	tạo 1 connected socket mới, trả về 1 file descriptor mới được liên kết với socket đó.
+	+ int sock_fd: 1 file descriptor
+	+ struct sockaddr* addr: là 1 con trỏ, trỏ tới struct sockaddr, nơi lưu trữ địa chỉ máy Client khi kết nối được chấp thuận.
+	+ socklen_t* addrlen: đây là 1 con trỏ tới 1 biến socklen_t chứa kích thước thực tế của máy khách
 	
 	
 	
+* read(int fd, void* buff, size_t byte)
+	-các đối số:
+	+ fd: file descriptor
+	+ buff: con trỏ để đọc
+	+ size_t: số lượng byte đọc
+	
+* send(int sockfd, const void *buf, size_t len, int flags);
+	- các đối số:
+	+ sockfd: file descriptor
+	+ void* buf: con trỏ tới vùng bộ nhớ chứa dữ liệu cần gửi.	
+	+ len: Đây là số byte dữ liệu sẽ gửi từ buf.
+	+ Đối số flags cho phép cấu hình bổ sung cho hàm send(). Có thể là 0 hoặc kết hợp của các cờ sau:
+	MSG_DONTWAIT: Gửi dữ liệu trong chế độ không chặn (non-blocking). Nếu không thể gửi ngay lập tức, send() sẽ trả về mà không chờ.
+	MSG_NOSIGNAL: Không gửi tín hiệu SIGPIPE nếu kết nối bị đóng đột ngột bởi phía nhận. Điều này tránh việc ứng dụng bị dừng khi gặp lỗi.
+	MSG_OOB: Gửi dữ liệu "ngoài băng tần" (out-of-band), chỉ dùng trong một số giao thức đặc biệt, như Telnet.
+	
+* int inet_pton(int af, const char *src, void *dst);
+	- các đối số:
+	+ af (Address Family): Đây là đối số chỉ định loại giao thức mạng mà bạn muốn sử dụng. Có thể là:
+		AF_INET: Dành cho địa chỉ IPv4.
+		AF_INET6: Dành cho địa chỉ IPv6.
+	Đây là thông số bắt buộc, vì nó cho biết kiểu địa chỉ mà bạn đang chuyển đổi.
+	+ src (Source): Đây là chuỗi ký tự chứa địa chỉ IP mà bạn muốn chuyển đổi (địa chỉ dạng chuỗi).
+
+	+ dst (Destination): Đây là con trỏ, trỏ tới một vùng nhớ mà kết quả chuyển đổi sẽ được lưu vào.
+	Với AF_INET, dst sẽ là một con trỏ tới một cấu trúc struct in_addr (dành cho IPv4).
+	Hàm inet_pton() sẽ lưu địa chỉ nhị phân vào vùng nhớ này.		
+	
+* connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+	- các đối số:
+	+ sockfd: Đây là file descriptor của socket mà bạn muốn sử dụng để kết nối.	
+	+ addr: Đây là con trỏ tới cấu trúc sockaddr chứa thông tin địa chỉ của máy chủ mà bạn muốn kết nối tới. 
+	+ addrlen: Đây là kích thước của cấu trúc addr mà bạn truyền vào (thường là sizeof(struct sockaddr_in)
+
+	
+* int t = recvfrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t *addrlen);
+	
+	- các đối số:
+	+ sockfd: Đây là file descriptor của socket mà bạn muốn nhận dữ liệu từ.
+	+ buf: Đây là con trỏ tới vùng nhớ nơi dữ liệu nhận được sẽ được lưu vào.
+	+ len:Đây là kích thước tối đa của vùng nhớ buf (số byte tối đa mà bạn muốn nhận).
+	+ flags: ây là các cờ điều khiển, có thể là 0 hoặc kết hợp của các giá trị sau:
+		. MSG_DONTWAIT: Không chặn, nghĩa là hàm sẽ không chờ dữ liệu mà sẽ trả về ngay lập tức nếu không có dữ liệu sẵn.
+		. MSG_PEEK: Chỉ đọc dữ liệu mà không xóa nó khỏi hàng đợi (dữ liệu sẽ vẫn còn trong buffer để có thể đọc lần sau).
+		. MSG_WAITALL: Chờ cho đến khi nhận đủ số byte yêu cầu trong len (chỉ với giao thức TCP).
+		. MSG_TRUNC: Nếu dữ liệu lớn hơn len, trả về kích thước thực của dữ liệu ban đầu mà không bị cắt bớt.
+	
+	+ src_addr: Đây là con trỏ tới một struct sockaddr, nếu không cần biết địa chỉ nguồn, bạn có thể đặt đối số này là NULL.
+	+ addrlen: Đây là con trỏ tới một biến socklen_t chứa kích thước của cấu trúc src_addr.
+	giá trị addrlen bằng kích thước của sockaddr, chẳng hạn sizeof(struct sockaddr_in)
+	
+	Khi thành công, recvfrom() trả về số byte đã nhận được.
+	Nếu xảy ra lỗi, recvfrom() trả về -1, và errno sẽ chứa mã lỗi mô tả chi tiết.
 	
 	
+* sendto(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen);
+
+	- các đối số:
+	+ sockfd: đây là 1 fd mà muốn gửi dữ liệu.
+	+ buf: đây là con trỏ tới vùng nhớ chứa dữ liệu muốn gửi
+	+ len: Đây là kích thước của dữ liệu (số byte) trong vùng nhớ buf mà bạn muốn gửi đi.
+	+ flags: Đây là các cờ điều khiển, cho phép điều chỉnh hành vi của sendto(). Một số giá trị thông dụng:
+		. MSG_DONTWAIT: Gửi dữ liệu không chặn, nghĩa là hàm sẽ không chờ mà sẽ trả về ngay lập tức nếu socket không sẵn sàng.
+		. MSG_CONFIRM: Yêu cầu xác nhận từ kernel rằng địa chỉ của socket đích là hợp lệ.
+		. MSG_EOR: Chỉ định kết thúc của bản ghi (record).
+		. MSG_NOSIGNAL: Không gửi tín hiệu SIGPIPE nếu kết nối bị ngắt.
+	+ dest_addr: Đây là con trỏ tới cấu trúc sockaddr chứa địa chỉ của máy nhận dữ liệu.
+	+ addrlen: Đây là kích thước của cấu trúc dest_addr, thường là sizeof(struct sockaddr_in) (IPv4) 
 	
 	
+* int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
+
+	+ nfds: Đây là giá trị của số file descriptor lớn nhất trong các tập hợp (sets) cộng thêm 1. Ví dụ, nếu file descriptor lớn nhất bạn muốn kiểm tra là 5, thì nfds nên là 6. Điều này giúp hệ thống biết phạm vi của các file descriptor cần giám sát.
+	+ readfds: Con trỏ trỏ đến một tập hợp fd_set chứa các file descriptor cần kiểm tra xem có dữ liệu để đọc không. Đây là danh sách các file descriptor mà bạn quan tâm đến sự kiện "có thể đọc được".
+	+ writefds: Con trỏ trỏ đến một tập hợp fd_set chứa các file descriptor cần kiểm tra xem có thể ghi không. Đây là danh sách các file descriptor mà bạn quan tâm đến sự kiện "có thể ghi được".
+	+ exceptfds: Con trỏ trỏ đến một tập hợp fd_set chứa các file descriptor cần kiểm tra các điều kiện ngoại lệ, chẳng hạn như lỗi kết nối mạng.
+	+ timeout: Con trỏ trỏ đến một cấu trúc struct timeval, dùng để thiết lập thời gian tối đa mà select() sẽ chờ trước khi thoát ra. Cấu trúc timeval có hai thành phần:
+		. tv_sec: số giây để chờ.
+		. tv_usec: số micro giây để chờ (1 giây = 1,000,000 micro giây)
+		Nếu timeout là NULL, select() sẽ chờ vô thời hạn cho đến khi có ít nhất một file descriptor sẵn sàng.
+		
+	- Giá trị trả về của select()
+		+ Trả về số lượng file descriptor sẵn sàng cho I/O nếu có.
+		+ Trả về 0 nếu hết thời gian chờ mà không có file descriptor nào sẵn sàng.
+		+ Trả về -1 nếu có lỗi xảy ra, và đặt errno để mô tả lỗi.
+
+	- Các macro hỗ trợ cho fd_set: 
+	Thường sử dụng các macro này để quản lý fd_set:
+		+ FD_ZERO(fd_set *set);           // Xóa tất cả các file descriptor trong tập hợp
+		+ FD_SET(int fd, fd_set *set);    // Thêm một file descriptor vào tập hợp
+		+ FD_CLR(int fd, fd_set *set);    // Xóa một file descriptor khỏi tập hợp
+		+ FD_ISSET(int fd, fd_set *set);  // Kiểm tra xem file descriptor có trong tập hợp không		
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.
+
+Buổi 9: SHARED MEMORY
+
+1. giới thiệu
+1.1 IPC là gì?
+	- IPC: inter process communication là cá phương thức được sử dụng để giao tiếp giữa các process với nhau.
+	- Giao tiếp ở đây đc nói đến trên 2 khía cạnh là: chia sẻ/truyền dữ liệu và đồng bộ dữ liệu
+	- communication and synchronization
 	
+1.2 Shared memory?
+	- Shared memory là vùng nhớ cho phép nhiều tiến trình có thể cùng truy cập tới.
+	- làm tăng tốc độ xử lý khi các tiến trình không cần gửi nhận dữ liệu cho nhau.
+	- sau khi đc tạo vùng nhớ ảo của chương trình sẽ nằm trong khoảng không gian địa chỉ giữa vùng nhớ heap và vùng nhớ stack.
 	
+	Có 2 phương pháp tạo Shared Memory:
+		+ Sử dụng API của shm (System V)
+		+ sử dụng API của mmap (POSIX)
+		
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
