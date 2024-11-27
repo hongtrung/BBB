@@ -9,7 +9,8 @@
         "string.h": "c",
         "shm.h": "c",
         "semaphore.h": "c",
-        "mman.h": "c"
+        "mman.h": "c",
+        "ipc.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

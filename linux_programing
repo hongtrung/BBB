@@ -1686,21 +1686,113 @@ Buổi 10. Semaphore
 
 
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.
 
 
 
+BBUỔI 11: Message Queues
+
+1. giới thiệu
+1.1 Message queues là gì?
+- 1 message queues là 1 ds liên kết(link-list) các message đc duy trì bởi kernel.
+- all process có thể trao đổi dữ liệu thông qua truy cập vào cùng 1 queues
+- mỗi message sẽ đc đính kèm thêm thông tin về type (type message)
 
 
 
+2. System V message queues
+- các bước triển khai
+	+ tạo key
+	+ tạo message queue hoặc 1 message queue có sẵn
+	+ ghi dữ liệu vào message queue
+	+ đọc dữ liệu từ message queue
+	+ giải phóng message queue
 
+2.1 Tạo Key
+- Key đc sd có thể là 1 số nguyên bất kỳ hoặc đc tạo ra bởi hàm ftok()
+2.2 Create a message queue
+- để tạo mới hoặc mở 1 msg_queue đã tồn tại ta sd msgget( key, msg_flag);
+	+ key đc tạo từ bước 1
+	+ msg_flag: IPC_CREAT or IPC_EXCL
+	
+- return msg_id nếu success
+2.3 Write into message queue
+- để ghi dữ liệu (send/append) vào message queue chúng ta sử dụng:
+		msgsnd(msqid, msgp, msgsz, msgflg);
+	+ msqid: message id thu đc từ msgget()
+	+ msgp: con trỏ tới message (send)
+	+ msgsz: kích thước message
+	+ msgflg: -IPC_NOWAIT: return ngay lập tức nếu message trong queue đã full     
+		  - MSG_NOERROR: cắt bớt message nếu kích thước mess lớn hơn msgsz
+	
+2.4 Read from the message queue
+- để đọc dữ liệu từ message queue chúng ta sử dụng msgrcv(msgid, msgp, maxmsgsz, msgtyp, msgflg)
+	+ msgid: msg id thu đc từ msgget
+	+ msgp: con trỏ tới buffer(read)
+	+ maxmsgsz: thường là kích thước của buffer
+	+ msgtyp: 0, +ve hoặc -ve
+	+ msgflg: -IPC_NOWAIT: return ngay lập tức nếu ko tìm thấy message trong queue
+		  - MSG_NOERROR: cắt bớt message nếu kích thước mess lớn hơn msgsz
 
+2.5 delete message queue
+- để kiểm soát các hd trên message queue chúng ta sử dụng msgctl()
+	+ msgid: msg id thu đc từ msgget()
+	+ cmd: IPC_RMID: xóa message queue ngay lập tức
+		IPC_STAT: 
+		IPC_SET
+	+ để xóa 1 message queue thông thường cmd chúng ta dùng là IPC_RMID và buf để thành gtrị NULL.
+	
 
+3. POSIX message queues
+các bước triển khai:
+	- tạo message queue hoặc mở 1 message queue có sẵn
+	- ghi dữ liệu vào msg queue
+	- đọc dữ liệu vào msg queue
+	- đóng mgs queue khi ko sd
+	- giải phóng msg queue
+	
+3.1 opening a message queues
+- sd:	 mq_open(name, oflag, mode, attr);
+	+ name: tên của message queues 
+	+ oflag: O_CREAT
+		 O_EXLC
+		 O_RDONLY
+		 O_NONBLOCK
+	+ mode: 0666
+	+ attr: chỉ định các thuộc tính của message queue. Nếu là NULL sẽ sd các thuộc tính mặc định
+	
+struct mq_attr
+{
+	long mq_flags;
+	long mq_maxmsg;
+	long mq_msgsz;
+	long mq_curmsgs; số lượng msg hiện tại trong queue
+}
 
+3.2 Sending message
+- để ghi dữ liệu vào message queue chúng ta sử dụng 
+	mq_send(mqdes, msg_prt, msg_len, msg_prio);
+	+ mqdes: mq descriptor đc trả về ở mq_open()
+	+ msg_prt: con trỏ tới message
+	+ msg_len: kích thước message
+	+ msg_prio: priority(độ ưu tiên) của message
+	0 là độ ưu tiên thấp nhất
+ 
+3.3 Receving message
+- đọc dữ liệu từ message queue chúng ta sd mq_receive()
+	+ mqdes: mq descriptor đc trả về từ md_open()
+	+ msg_ptr: con trỏ tới message
+	+ msg_len: kích thước message
+	+ msg_prio: priority(độ ưu tiên) của message
+- hàm mq_receive() loại bỏ message có mức độ ưu tiên cao nhất ra khỏi queue, đc tham chiếu bởi mqdes và trả về thông báo đó trong bộ đệm do msg_ptr trỏ tới.
 
-
-
-
-
+3.4 clossing a message queue
+- để đóng message queue khi ko còn sd ta sd: mq_close()
+	+ mqdes: mq descriptor được trả về bởi mq_open().
+	
+3.5 remove a message queue
+- để xóa message queue khi không còn sd ta sd: mq_unlink().
+	+ mqdes: mq descriptor được trả về bởi mq_open().
 
 
 
