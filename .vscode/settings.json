@@ -10,7 +10,9 @@
         "shm.h": "c",
         "semaphore.h": "c",
         "mman.h": "c",
-        "ipc.h": "c"
+        "ipc.h": "c",
+        "module.h": "c",
+        "fs.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

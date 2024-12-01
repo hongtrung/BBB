@@ -1,0 +1,1 @@
+savedcmd_/home/trungdoan/2_beaglebone/11_linux_kernel_module/5_fops_rw/hello.ko := ld -r -m elf_x86_64 -z noexecstack --build-id=sha1  -T scripts/module.lds -o /home/trungdoan/2_beaglebone/11_linux_kernel_module/5_fops_rw/hello.ko /home/trungdoan/2_beaglebone/11_linux_kernel_module/5_fops_rw/hello.o /home/trungdoan/2_beaglebone/11_linux_kernel_module/5_fops_rw/hello.mod.o

@@ -1799,8 +1799,64 @@ struct mq_attr
 
 
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.
+Buổi 12 Linux kernel module
 
+1. setuo environment (cài đặt môi trường)
 
+- là thành phần đc sd để biên dịch cho module của kernel
+- kernel header đc cài đặt phải trùng với kernel version mà bạn muốn sử dụng (uname -r)
+- cú pháp: 
+	sudo apt install --y linux-headers-`umane -r`
+- Đường dẫn: /lib/modules/
+
+2. Hello world kernel module
+
+2.1 Init/exit function
+
+- __init là chức năng đầu tiên đc thực thi khi module đc load vào kernel
+- __exit là chức năng đc thực thi sau cùng khi module đc unload khỏi kernel
+
+	+ sudo insmod hello.ko
+	+ dmesg
+	+ dmesg | tail
+	+ lsmod | grep hello
+	+ sudo rmmod hello // xóa module
+	
+2.2 Module information
+- sử dụng modinfo để xem thông tin của module
+	+ License: giấy phép GPL
+	+ Author: nhà phát triển module
+	+ Module despription: mô tỏa sơ bộ về module
+	+ Module version: phiên bản module
+	
+	modinfo hello.ko
+	
+3. Standard format character device driver
+3.1 Allocate device number
+
+- Application giao tiếp với phần cứng ntn?
+- Device number"
+	+ Major number(số chính- đại diện cho 1 thiết bị): là số xđ liên kết giữa driver và device. 1 major number có thể đc chia sẻ giữa nhiều device driver.
+	+ Minor number(số phụ- đại diện cho phiên bản của thiết bị): là số dùng để phân biệt các thiết bị vật lý riêng lẻ
+- Để cấp phát device number ta có thể sử dụng 1 trong 2 cách sau:
+	+ Static allocating
+	+ Dynamic allcating
+		
+		ls /dev/
+		cat /proc/devices (major number)
+
+3.2 Create Device File
+- tạo class device
+- tạo device file
+
+3.3 Register File operations
+- struct inode là struct chứa toàn bộ thông tin của 1 file
+- lưu ý khác biệt giữa open file và file
+- struct cdev là 1 phần tử của struct inode
+- là struct đại diện cho charater device
+- struct file_operation là 1 phần tử của struct cdev
+- định nghĩa toàn bộc các hoạt động của file (open/read/write/close/mmap/ioctl)
 
 
 

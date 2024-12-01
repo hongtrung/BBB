@@ -1,0 +1,1 @@
+savedcmd_/home/trungdoan/2_beaglebone/11_linux_kernel_module/5_fops_rw/Module.symvers :=  scripts/mod/modpost -M -m -a      -o /home/trungdoan/2_beaglebone/11_linux_kernel_module/5_fops_rw/Module.symvers -T /home/trungdoan/2_beaglebone/11_linux_kernel_module/5_fops_rw/modules.order -i Module.symvers -e 

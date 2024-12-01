@@ -1,0 +1,1 @@
+savedcmd_/home/trungdoan/2_beaglebone/11_linux_kernel_module/5_fops_rw/hello.mod := printf '%s\n'   hello.o | awk '!x[$$0]++ { print("/home/trungdoan/2_beaglebone/11_linux_kernel_module/5_fops_rw/"$$0) }' > /home/trungdoan/2_beaglebone/11_linux_kernel_module/5_fops_rw/hello.mod
