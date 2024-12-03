@@ -12,13 +12,13 @@ int buffer = 0;
 
 void* producer(void* argv)
 {
-    while (buffer < 2)
+    while (buffer < 5)
     {   
         sleep(1);
         pthread_mutex_lock(&mutex);
         buffer++;
         printf("Produce: da tang Buffer len %d\n", buffer);
-        if (buffer == 2)
+        if (buffer == 5)
         {
             printf("Buffer =%d , ket thuc chuong trinh\n", buffer);
             pthread_exit(NULL);
@@ -35,7 +35,8 @@ void* consumer_1(void* argv)
     
     while(1)
     {   
-        if (buffer == 2)
+        sleep(2);
+        if (buffer == 5)
         {
             printf("Buffer =%d , ket thuc chuong trinh\n", buffer);
             pthread_exit(NULL);
@@ -45,7 +46,7 @@ void* consumer_1(void* argv)
         buffer--;
         printf("\tConsumer_1: da giam Buffer di 1\n");
         pthread_mutex_unlock(&mutex);
-        sleep(2);
+        // sleep(2);
     }
     
     return 0;
@@ -55,7 +56,8 @@ void* consumer_2(void* argv)
 {   
     while(1)
     {   
-        if (buffer == 2)
+        sleep(3);
+        if (buffer == 5)
         {
             printf("Buffer =%d , ket thuc chuong trinh\n", buffer);
             pthread_exit(NULL);
@@ -65,7 +67,7 @@ void* consumer_2(void* argv)
         buffer--;
         printf("\tConsumer_2: da giam Buffer di 1\n");
         pthread_mutex_unlock(&mutex);
-        sleep(3);
+        // sleep(3);
     }
     
     return 0;
